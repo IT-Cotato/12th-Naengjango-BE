@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@AllArgsConstructor
-@Getter
 /**
  * 공통 성공 코드
  */
+@AllArgsConstructor
+@Getter
 public enum GeneralSuccessCode implements BaseSuccessCode {
 
     OK(HttpStatus.OK,
