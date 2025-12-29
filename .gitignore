@@ -38,3 +38,10 @@ out/
 
 # OS
 .DS_Store
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+build.gradle
