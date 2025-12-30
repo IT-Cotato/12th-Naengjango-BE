@@ -22,7 +22,7 @@ public class AuthController {
     // private final AuthService authService;
 
     @Operation(
-            summary = "로그인",
+            summary = "로그인 by 임준서 (개발 중)",
             description = """
                             사용자 로그인 API 입니다.
                             - 요청 바디에 username과 password를 포함하여 전송합니다.
@@ -57,7 +57,7 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "로그아웃",
+            summary = "로그아웃 by 임준서 (개발 중)",
             description = """
                             사용자 로그아웃 API 입니다.
                             - Authorization Header에 access token(JWT)을 포함해야 합니다.
