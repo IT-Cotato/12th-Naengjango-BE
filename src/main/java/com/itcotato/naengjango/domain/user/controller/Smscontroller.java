@@ -36,12 +36,23 @@ public class Smscontroller {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "SMS500_1",
                     description = "문자 발송 실패"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "SMS400_3",
+                    description = "이미 가입된 전화번호"
             )
     })
 
     @PostMapping("/send")
     public ApiResponse<String> sendSms(@RequestBody SmsRequestDTO.SmsSendDTO request) {
-        smsService.sendVerificationSms(request.getPhoneNumber());
+        String result = smsService.sendVerificationSms(request.getPhoneNumber());
+
+        // 입력한 번호가 이미 가입된 번호일 때
+        if ("ALREADY_EXISTS".equals(result)) {
+            return ApiResponse.onFailure(SmsErrorCode.SMS_ALREADY_EXISTS, "이미 가입된 휴대폰 번호입니다.");
+        }
+
+        // 인증번호를 성공적으로 발송했을 때
         return ApiResponse.onSuccess(SmsSuccessCode.SMS_SEND_SUCCESS, "인증번호가 발송되었습니다.");
     }
 

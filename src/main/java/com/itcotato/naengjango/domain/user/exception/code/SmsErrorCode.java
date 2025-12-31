@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum SmsErrorCode implements BaseErrorCode {
     // SMS 전송 관련 에러 코드
+    SMS_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SMS400_3", "이미 가입된 휴대폰 번호입니다."),
     SMS_INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SMS500_1", "문자 발송에 실패했습니다."),
 
     // SMS 인증번호 관련 에러 코드

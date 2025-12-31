@@ -2,7 +2,9 @@ package com.itcotato.naengjango.domain.user.service;
 
 import com.itcotato.naengjango.domain.user.exception.UserException;
 import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.domain.user.repository.UserRepository;
 import com.itcotato.naengjango.global.exception.GeneralException;
+import lombok.RequiredArgsConstructor;
 import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
@@ -19,6 +21,7 @@ public class SmsService {
     private final DefaultMessageService messageService;
     private final String fromNumber;
     private final StringRedisTemplate redisTemplate; // Redis 연결용
+    private final UserRepository userRepository;
 
     // 인증번호 저장용 키
     private static final String SMS_PREFIX = "sms:";
@@ -29,16 +32,22 @@ public class SmsService {
             @Value("${coolsms.api.key}") String apiKey,
             @Value("${coolsms.api.secret}") String apiSecret,
             @Value("${coolsms.from}") String fromNumber,
-            StringRedisTemplate redisTemplate) {
+            StringRedisTemplate redisTemplate, UserRepository userRepository) {
         this.messageService = NurigoApp.INSTANCE.initialize(apiKey, apiSecret, "https://api.coolsms.co.kr");
         this.fromNumber = fromNumber;
         this.redisTemplate = redisTemplate;
+        this.userRepository = userRepository;
     }
 
     /**
-     * 인증번호를 생성하고 발송하며, Redis에 5분간 저장합니다.
+     * 인증번호를 생성하고 발송하며, Redis에 5분간 저장
+     * 이미 가입한 전화번호라면 인증번호 생성 불가
      */
-    public void sendVerificationSms(String phoneNumber) {
+    public String sendVerificationSms(String phoneNumber) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+            return "ALREADY_EXISTS"; // 컨트롤러에서 분기 처리를 위해 문자열 반환
+        }
+
         String verificationCode = String.format("%04d", new Random().nextInt(10000));
 
         Message message = new Message();
@@ -56,6 +65,8 @@ public class SmsService {
                     5,
                     TimeUnit.MINUTES
             );
+            return "SUCCESS";
+
         } catch (Exception e) {
             throw new UserException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
         }
