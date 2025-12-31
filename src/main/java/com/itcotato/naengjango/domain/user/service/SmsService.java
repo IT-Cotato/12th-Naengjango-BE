@@ -2,6 +2,7 @@ package com.itcotato.naengjango.domain.user.service;
 
 import com.itcotato.naengjango.domain.user.exception.UserException;
 import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.global.exception.GeneralException;
 import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
@@ -63,25 +64,23 @@ public class SmsService {
     /**
      * 입력받은 번호가 Redis에 저장된 번호와 일치하는지 확인 + 인증상태 15분간 저장
      */
-    public boolean verifyCode(String phoneNumber, String inputCode) {
+    public String verifyCode(String phoneNumber, String inputCode) {
         String savedCode = redisTemplate.opsForValue().get(SMS_PREFIX + phoneNumber);
 
-        // 1. 인증번호가 없거나 틀리면 실패
-        if (savedCode == null || !savedCode.equals(inputCode)) {
-            return false;
+        // 1. 인증번호가 만료되었을 때
+        if (savedCode == null) {
+            return "EXPIRED";
         }
 
-        // 2. 인증번호 일치 시, 기존 인증번호 데이터 삭제
+        // 2. 인증번호가 틀렸을 때
+        if (!savedCode.equals(inputCode)) {
+            return "MISMATCH";
+        }
+
+        // 3. 인증 성공 시 redis에서 데이터 삭제 + 인증 완료 상태를 15분간 저장
         redisTemplate.delete(SMS_PREFIX + phoneNumber);
+        redisTemplate.opsForValue().set(VERIFIED_PREFIX + phoneNumber, "true", 15, TimeUnit.MINUTES);
 
-        // 3. 인증 완료 상태를 Redis에 15분간 저장
-        redisTemplate.opsForValue().set(
-                VERIFIED_PREFIX + phoneNumber,
-                "true",
-                15,
-                TimeUnit.MINUTES
-        );
-
-        return true;
+        return "SUCCESS";
     }
 }

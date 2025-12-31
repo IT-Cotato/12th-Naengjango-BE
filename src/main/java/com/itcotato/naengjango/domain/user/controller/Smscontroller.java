@@ -61,14 +61,28 @@ public class Smscontroller {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "SMS400_1",
                     description = "인증번호 불일치"
-            )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "SMS400_2",
+                    description = "인증시간 만료"
+            ),
     })
 
     @PostMapping("/verify")
     public ApiResponse<String> verifySms(@RequestBody SmsRequestDTO.SmsVerifyDTO request) {
-        if (smsService.verifyCode(request.getPhoneNumber(), request.getVerifyCode())) {
-            return ApiResponse.onSuccess(SmsSuccessCode.SMS_VERIFY_SUCCESS,null);
+        String result = smsService.verifyCode(request.getPhoneNumber(), request.getVerifyCode());
+
+        // 인증 성공했을 때
+        if ("SUCCESS".equals(result)) {
+            return ApiResponse.onSuccess(SmsSuccessCode.SMS_VERIFY_SUCCESS, "인증에 성공하였습니다.");
         }
+
+        // 인증시간 만료되었을 때
+        if ("EXPIRED".equals(result)) {
+            return ApiResponse.onFailure(SmsErrorCode.SMS_VERIFY_EXPIRED, null);
+        }
+
+        // 인증번호 틀렸을 때
         return ApiResponse.onFailure(SmsErrorCode.SMS_BAD_REQUEST, null);
     }
 }
