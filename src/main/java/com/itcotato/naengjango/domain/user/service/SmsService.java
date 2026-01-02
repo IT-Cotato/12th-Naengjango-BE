@@ -44,17 +44,21 @@ public class SmsService {
      * 이미 가입한 전화번호라면 인증번호 생성 불가
      */
     public String sendVerificationSms(String phoneNumber) {
+        // 이미 회원가입된 전화번호일 때
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            return "ALREADY_EXISTS"; // 컨트롤러에서 분기 처리를 위해 문자열 반환
+            return "ALREADY_EXISTS";
         }
 
+        // 1. 4자리 인증번호 랜덤 생성
         String verificationCode = String.format("%04d", new Random().nextInt(10000));
 
+        // 2. 인증문자 생성
         Message message = new Message();
         message.setFrom(fromNumber);
         message.setTo(phoneNumber);
         message.setText("[냉잔고] 인증번호는 [" + verificationCode + "] 입니다.");
 
+        // 3. 인증문자 전송
         try {
             this.messageService.sendOne(new SingleMessageSendingRequest(message));
 
@@ -73,7 +77,8 @@ public class SmsService {
     }
 
     /**
-     * 입력받은 번호가 Redis에 저장된 번호와 일치하는지 확인 + 인증상태 15분간 저장
+     * 입력받은 번호가 Redis에 저장된 번호와 일치하는지 확인
+     * 인증 성공 시 인증상태 15분간 저장
      */
     public String verifyCode(String phoneNumber, String inputCode) {
         String savedCode = redisTemplate.opsForValue().get(SMS_PREFIX + phoneNumber);
