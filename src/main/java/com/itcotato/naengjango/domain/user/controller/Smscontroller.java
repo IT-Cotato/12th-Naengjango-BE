@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class Smscontroller {
     private final SmsService smsService;
 
-    @Operation(summary = "SMS 인증번호 발송 by 주성아",
+    @Operation(summary = "SMS 인증번호 발송 by 주성아 (개발 완료)",
             description = """
                 사용자 휴대폰으로 4자리 인증번호를 발송하는 API입니다.
                 - `phoneNumber`: 인증번호를 받을 핸드폰 번호
