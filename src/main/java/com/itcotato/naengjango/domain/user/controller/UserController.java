@@ -13,14 +13,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "사용자", description = "사용자 회원가입 관련 API")
+@Tag(name = "사용자 회원가입", description = "사용자 회원가입 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
 
-    @Operation(summary = "ID 중복 확인 by 주성아",
+    @Operation(summary = "ID 중복 확인 by 주성아 (개발 완료)",
             description = """
                 회원가입 시 ID 중복 확인하는 API입니다.
                 - `loginId`: 중복 여부를 확인할 아이디
