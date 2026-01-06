@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.user.exception.code;
+package com.itcotato.naengjango.domain.member.exception.code;
 
 import com.itcotato.naengjango.global.apiPayload.code.BaseErrorCode;
 import lombok.AllArgsConstructor;
@@ -11,9 +11,9 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum UserErrorCode implements BaseErrorCode {
+public enum MemberErrorCode implements BaseErrorCode {
     // 아이디 중복 확인 관련 에러 코드
-    USER_ID_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "USER400_1", "이미 존재하는 아이디입니다.");
+    MEMBER_ID_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "MEMBER400_1", "이미 존재하는 아이디입니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -1,9 +1,9 @@
-package com.itcotato.naengjango.domain.user.controller;
+package com.itcotato.naengjango.domain.member.controller;
 
-import com.itcotato.naengjango.domain.user.dto.SmsRequestDTO;
-import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
-import com.itcotato.naengjango.domain.user.exception.code.SmsSuccessCode;
-import com.itcotato.naengjango.domain.user.service.SmsService;
+import com.itcotato.naengjango.domain.member.dto.SmsRequestDTO;
+import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.domain.member.exception.code.SmsSuccessCode;
+import com.itcotato.naengjango.domain.member.service.SmsService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

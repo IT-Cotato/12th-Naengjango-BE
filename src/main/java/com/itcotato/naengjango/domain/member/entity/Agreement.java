@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.user.entity;
+package com.itcotato.naengjango.domain.member.entity;
 
 import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.Column;

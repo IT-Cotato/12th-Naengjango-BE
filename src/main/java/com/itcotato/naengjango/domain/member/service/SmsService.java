@@ -1,10 +1,8 @@
-package com.itcotato.naengjango.domain.user.service;
+package com.itcotato.naengjango.domain.member.service;
 
-import com.itcotato.naengjango.domain.user.exception.UserException;
-import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
-import com.itcotato.naengjango.domain.user.repository.UserRepository;
-import com.itcotato.naengjango.global.exception.GeneralException;
-import lombok.RequiredArgsConstructor;
+import com.itcotato.naengjango.domain.member.exception.UserException;
+import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
@@ -21,7 +19,7 @@ public class SmsService {
     private final DefaultMessageService messageService;
     private final String fromNumber;
     private final StringRedisTemplate redisTemplate; // Redis 연결용
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     // 인증번호 저장용 키
     private static final String SMS_PREFIX = "sms:";
@@ -32,11 +30,11 @@ public class SmsService {
             @Value("${coolsms.api.key}") String apiKey,
             @Value("${coolsms.api.secret}") String apiSecret,
             @Value("${coolsms.from}") String fromNumber,
-            StringRedisTemplate redisTemplate, UserRepository userRepository) {
+            StringRedisTemplate redisTemplate, MemberRepository memberRepository) {
         this.messageService = NurigoApp.INSTANCE.initialize(apiKey, apiSecret, "https://api.coolsms.co.kr");
         this.fromNumber = fromNumber;
         this.redisTemplate = redisTemplate;
-        this.userRepository = userRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -45,7 +43,7 @@ public class SmsService {
      */
     public String sendVerificationSms(String phoneNumber) {
         // 이미 회원가입된 전화번호일 때
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
+        if (memberRepository.existsByPhoneNumber(phoneNumber)) {
             return "ALREADY_EXISTS";
         }
 

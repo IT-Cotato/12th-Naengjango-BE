@@ -1,15 +1,15 @@
-package com.itcotato.naengjango.domain.user.service;
+package com.itcotato.naengjango.domain.member.service;
 
-import com.itcotato.naengjango.domain.user.dto.UserRequestDTO;
-import com.itcotato.naengjango.domain.user.entity.Agreement;
-import com.itcotato.naengjango.domain.user.entity.FixedExpenditure;
-import com.itcotato.naengjango.domain.user.entity.User;
-import com.itcotato.naengjango.domain.user.entity.UserAgreement;
-import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
-import com.itcotato.naengjango.domain.user.repository.AgreementRepository;
-import com.itcotato.naengjango.domain.user.repository.FixedExpenditureRepository;
-import com.itcotato.naengjango.domain.user.repository.UserAgreementRepository;
-import com.itcotato.naengjango.domain.user.repository.UserRepository;
+import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
+import com.itcotato.naengjango.domain.member.entity.Agreement;
+import com.itcotato.naengjango.domain.member.entity.FixedExpenditure;
+import com.itcotato.naengjango.domain.member.entity.Member;
+import com.itcotato.naengjango.domain.member.entity.MemberAgreement;
+import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.domain.member.repository.AgreementRepository;
+import com.itcotato.naengjango.domain.member.repository.FixedExpenditureRepository;
+import com.itcotato.naengjango.domain.member.repository.MemberAgreementRepository;
+import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import com.itcotato.naengjango.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserService {
-    private final UserRepository userRepository;
+public class MemberService {
+    private final MemberRepository memberRepository;
     private final FixedExpenditureRepository fixedExpenditureRepository;
     private final AgreementRepository agreementRepository;
-    private final UserAgreementRepository userAgreementRepository;
+    private final MemberAgreementRepository memberAgreementRepository;
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
     private final String VERIFIED_PREFIX = "sms:verified:";
@@ -43,14 +43,14 @@ public class UserService {
      */
 
     public boolean isLoginIdDuplicate(String loginId) {
-        return userRepository.existsByLoginId(loginId);
+        return memberRepository.existsByLoginId(loginId);
     }
 
     /**
      * 회원가입 시 회원 정보 저장
      * 휴대폰 인증 완료 여부 확인 후 회원가입
      */
-    public void signup(UserRequestDTO.SignupDTO request) {
+    public void signup(MemberRequestDTO.SignupDTO request) {
         // 1. 휴대폰 인증 상태 유효 여부 확인 (Redis에 저장한 Prefix 확인해서 15분이 안 지났는지 확인)
         String isVerified = redisTemplate.opsForValue().get(VERIFIED_PREFIX + request.getPhoneNumber());
         if (isVerified == null || !isVerified.equals("true")) {
@@ -62,33 +62,33 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         // 3. 유저 엔티티 생성 및 저장
-        User user = User.builder()
+        Member member = Member.builder()
                 .loginId(request.getLoginId())
                 .password(encodedPassword)
                 .name(request.getName())
                 .phoneNumber(request.getPhoneNumber())
                 .budget(request.getBudget())
-                .socialType(User.SocialType.GENERAL)
+                .socialType(Member.SocialType.GENERAL)
                 .build();
 
-        userRepository.save(user);
+        memberRepository.save(member);
 
         // 4. 약관 동의 저장
         // 동의한 약관 ID 리스트를 순회하며 UserAgreement 생성
         if (request.getAgreedAgreementIds() != null && !request.getAgreedAgreementIds().isEmpty()) {
-            List<UserAgreement> userAgreements = request.getAgreedAgreementIds().stream()
+            List<MemberAgreement> memberAgreements = request.getAgreedAgreementIds().stream()
                     .map(agreementId -> {
                         Agreement agreement = agreementRepository.getReferenceById(agreementId);
 
-                        return UserAgreement.builder()
-                                .user(user)
+                        return MemberAgreement.builder()
+                                .member(member)
                                 .agreement(agreement)
                                 .isAgreed(true) // ★ 핵심: DB의 tinyint(1) NO 설정을 만족시키기 위해 true(1) 주입
                                 .build();
                     })
                     .toList();
 
-            userAgreementRepository.saveAll(userAgreements);
+            memberAgreementRepository.saveAll(memberAgreements);
         }
 
         // 5. 고정 지출 리스트 저장
@@ -98,7 +98,7 @@ public class UserService {
                     .map(dto -> FixedExpenditure.builder()
                             .item(dto.getItem())
                             .amount(dto.getAmount())
-                            .user(user)
+                            .member(member)
                             .build())
                     .collect(Collectors.toList());
 

@@ -1,12 +1,9 @@
-package com.itcotato.naengjango.domain.user.controller;
+package com.itcotato.naengjango.domain.member.controller;
 
-import com.itcotato.naengjango.domain.user.dto.SmsRequestDTO;
-import com.itcotato.naengjango.domain.user.dto.UserRequestDTO;
-import com.itcotato.naengjango.domain.user.exception.code.SmsErrorCode;
-import com.itcotato.naengjango.domain.user.exception.code.SmsSuccessCode;
-import com.itcotato.naengjango.domain.user.exception.code.UserErrorCode;
-import com.itcotato.naengjango.domain.user.exception.code.UserSuccessCode;
-import com.itcotato.naengjango.domain.user.service.UserService;
+import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
+import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
+import com.itcotato.naengjango.domain.member.exception.code.MemberSuccessCode;
+import com.itcotato.naengjango.domain.member.service.MemberService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "사용자 회원가입", description = "사용자 회원가입 관련 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users")
-public class UserController {
-    private final UserService userService;
+@RequestMapping("/api/members")
+public class MemberController {
+    private final MemberService memberService;
 
     @Operation(summary = "ID 중복 확인 by 주성아 (개발 완료)",
             description = """
@@ -30,26 +27,26 @@ public class UserController {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "USER200_1",
+                    responseCode = "MEMBER200_1",
                     description = "사용 가능한 아이디"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "USER400_1",
+                    responseCode = "MEMBER400_1",
                     description = "이미 존재하는 아이디"
             )
     })
 
     @PostMapping("/check-id")
     public ApiResponse<Boolean> checkLoginId(@RequestParam String loginId) {
-        boolean isDuplicate = userService.isLoginIdDuplicate(loginId);
+        boolean isDuplicate = memberService.isLoginIdDuplicate(loginId);
 
         if (isDuplicate) {
             // 이미 존재하는 ID인 경우
-            return ApiResponse.onFailure(UserErrorCode.USER_ID_ALREADY_EXISTS, true);
+            return ApiResponse.onFailure(MemberErrorCode.MEMBER_ID_ALREADY_EXISTS, true);
         }
 
         // 사용 가능한 ID인 경우 (중복이 아닌 경우)
-        return ApiResponse.onSuccess(UserSuccessCode.USER_ID_AVAILABLE, false);
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_ID_AVAILABLE, false);
     }
 
 
@@ -62,7 +59,7 @@ public class UserController {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "USER200_2",
+                    responseCode = "MEMBER200_2",
                     description = "회원가입 완료"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -72,8 +69,8 @@ public class UserController {
     })
 
     @PostMapping("/signup")
-    public ApiResponse<String> signup(@RequestBody UserRequestDTO.SignupDTO request) {
-        userService.signup(request);
-        return ApiResponse.onSuccess(UserSuccessCode.USER_SIGNUP_SUCCESS, "회원가입이 완료되었습니다.");
+    public ApiResponse<String> signup(@RequestBody MemberRequestDTO.SignupDTO request) {
+        memberService.signup(request);
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_SIGNUP_SUCCESS, "회원가입이 완료되었습니다.");
     }
 }

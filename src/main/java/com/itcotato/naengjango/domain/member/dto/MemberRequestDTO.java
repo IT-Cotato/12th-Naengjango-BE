@@ -1,11 +1,11 @@
-package com.itcotato.naengjango.domain.user.dto;
+package com.itcotato.naengjango.domain.member.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.util.List;
 
-public class UserRequestDTO {
+public class MemberRequestDTO {
 
     @Getter
     @Schema(description = "회원가입 요청 객체")

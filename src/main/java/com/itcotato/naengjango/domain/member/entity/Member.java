@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.user.entity;
+package com.itcotato.naengjango.domain.member.entity;
 
 import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -12,10 +12,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class User extends BaseEntity {
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private Long memberId;
 
     @Column(nullable = false, unique = true, length = 50)
     private String loginId; // 로그인용 id 추가
@@ -35,8 +35,9 @@ public class User extends BaseEntity {
 
     private Integer budget; // 한 달 예산
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserAgreement> userAgreements = new ArrayList<>();
+    @Builder.Default
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberAgreement> memberAgreements = new ArrayList<>();
 
     public enum SocialType {
         GENERAL, GOOGLE

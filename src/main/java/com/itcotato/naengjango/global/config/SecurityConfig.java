@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 로그인 없이 허용 가능한 경로
                         .requestMatchers("/api/sms/**", "/swagger-ui/**", "/v3/api-docs/**",
-                                "/swagger-resources/**", "/error", "/api/users/**").permitAll()
+                                "/swagger-resources/**", "/error", "/api/members/**").permitAll()
 
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()

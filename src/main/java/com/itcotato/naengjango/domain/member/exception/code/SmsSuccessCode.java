@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.user.exception.code;
+package com.itcotato.naengjango.domain.member.exception.code;
 
 import com.itcotato.naengjango.global.apiPayload.code.BaseSuccessCode;
 import lombok.AllArgsConstructor;

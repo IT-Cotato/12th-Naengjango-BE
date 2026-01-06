@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.user.entity;
+package com.itcotato.naengjango.domain.member.entity;
 
 import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -23,6 +23,6 @@ public class FixedExpenditure extends BaseEntity {
     private Long amount; // 금액
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 }
