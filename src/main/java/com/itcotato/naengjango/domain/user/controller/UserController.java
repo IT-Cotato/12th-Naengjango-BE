@@ -53,7 +53,7 @@ public class UserController {
     }
 
 
-    @Operation(summary = "최종 회원가입 API by 주성아",
+    @Operation(summary = "최종 회원가입 API by 주성아 (개발 완료)",
             description = """
                 회원가입 시 유저 정보를 저장하는 API입니다.
                 - 이름, 전화번호, 아이디, 비밀번호, 동의한 약관 ID 리스트, 한 달 예산, 고정지출 리스트 저장합니다.
