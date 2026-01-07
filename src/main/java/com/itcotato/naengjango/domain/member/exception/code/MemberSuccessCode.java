@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 /**
  * 회원가입 관련 성공 코드 정의
  */
-
 @Getter
 @AllArgsConstructor
 public enum MemberSuccessCode implements BaseSuccessCode {

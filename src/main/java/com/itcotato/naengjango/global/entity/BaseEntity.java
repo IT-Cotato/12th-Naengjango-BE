@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 /**
  * 모든 Entity의 Base 클래스
  * createdAt, updatedAt 자동 관리
- * 다른 엔티티에서 implements 해서 사용
+ * 다른 엔티티에서 extend 해서 사용
  */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
