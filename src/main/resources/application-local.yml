@@ -30,3 +30,9 @@ logging:
   level:
     org.springframework.security: TRACE
     org.springframework.web: DEBUG
+
+coolsms:
+  api:
+    key: {cool-sms-api-key}
+    secret: {cool-sms-api-secret}
+  from: {cool-sms-from-phone-number}

@@ -1,6 +1,6 @@
 package com.itcotato.naengjango.domain.member.service;
 
-import com.itcotato.naengjango.domain.member.exception.UserException;
+import com.itcotato.naengjango.domain.member.exception.MemberException;
 import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
 import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import net.nurigo.sdk.NurigoApp;
@@ -70,7 +70,7 @@ public class SmsService {
             return "SUCCESS";
 
         } catch (Exception e) {
-            throw new UserException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
+            throw new MemberException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
         }
     }
 

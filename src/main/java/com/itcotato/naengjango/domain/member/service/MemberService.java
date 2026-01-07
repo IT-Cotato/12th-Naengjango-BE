@@ -5,6 +5,7 @@ import com.itcotato.naengjango.domain.member.entity.Agreement;
 import com.itcotato.naengjango.domain.member.entity.FixedExpenditure;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.entity.MemberAgreement;
+import com.itcotato.naengjango.domain.member.enums.SocialType;
 import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
 import com.itcotato.naengjango.domain.member.repository.AgreementRepository;
 import com.itcotato.naengjango.domain.member.repository.FixedExpenditureRepository;
@@ -68,7 +69,7 @@ public class MemberService {
                 .name(request.getName())
                 .phoneNumber(request.getPhoneNumber())
                 .budget(request.getBudget())
-                .socialType(Member.SocialType.GENERAL)
+                .socialType(SocialType.LOCAL)
                 .build();
 
         memberRepository.save(member);
