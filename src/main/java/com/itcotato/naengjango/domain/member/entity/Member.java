@@ -6,12 +6,15 @@ import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "member") // DB 테이블명 유지
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 public class Member extends BaseEntity {
 
     /** 회원 고유 식별자 */
@@ -72,6 +75,9 @@ public class Member extends BaseEntity {
     public boolean isLocalAccount() {
         return this.socialType == SocialType.LOCAL;
     }
+    @Builder.Default
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberAgreement> memberAgreements = new ArrayList<>();
 
     /**
      * 소셜 로그인 계정 여부

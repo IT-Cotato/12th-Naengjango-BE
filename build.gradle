@@ -50,6 +50,9 @@ dependencies {
 
 	// google oauth
 	implementation 'com.google.api-client:google-api-client:2.4.0'
+
+	// Coolsms
+	implementation 'net.nurigo:sdk:4.3.0'
 }
 
 tasks.named('test') {
