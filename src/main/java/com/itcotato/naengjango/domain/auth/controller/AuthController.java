@@ -25,7 +25,7 @@ public class AuthController {
      * 기본 로그인 (아이디 + 비밀번호)
      */
     @Operation(
-            summary = "기본 로그인 by 임준서 (개발 중)",
+            summary = "기본 로그인 by 임준서 (개발 완료)",
             description = """
                             기본 사용자 로그인 API 입니다.
                             - 요청 바디에 username과 password를 포함하여 전송합니다.
@@ -71,7 +71,7 @@ public class AuthController {
      * 소셜 로그인
      */
     @Operation(
-            summary = "소셜 로그인 by 임준서 (개발 중)",
+            summary = "소셜 로그인 by 임준서 (개발 완료)",
             description = """
                             기본 사용자 로그인 API 입니다.
                             - 요청 바디에 username과 password를 포함하여 전송합니다.
@@ -117,7 +117,7 @@ public class AuthController {
      * 로그아웃
      */
     @Operation(
-            summary = "로그아웃 by 임준서 (개발 중)",
+            summary = "로그아웃 by 임준서 (개발 완료)",
             description = """
                             사용자 로그아웃 API 입니다.
                             - Authorization Header에 access token(JWT)을 포함해야 합니다.
@@ -150,7 +150,7 @@ public class AuthController {
      * 토큰 재발급
      */
     @Operation(
-            summary = "토큰 재발급 by 임준서 (개발 중)",
+            summary = "토큰 재발급 by 임준서 (개발 완료)",
             description = """
                             Access Token 재발급 API 입니다.
                             - 요청 바디에 유효한 Refresh Token을 포함하여 전송합니다.
