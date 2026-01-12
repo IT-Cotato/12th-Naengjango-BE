@@ -50,9 +50,9 @@ public class MemberController {
     }
 
 
-    @Operation(summary = "최종 회원가입 API by 주성아 (개발 완료)",
+    @Operation(summary = "일반 회원가입 API by 주성아 (개발 완료)",
             description = """
-                회원가입 시 유저 정보를 저장하는 API입니다.
+                일반 회원가입 시 유저 정보를 저장하는 API입니다.
                 - 이름, 전화번호, 아이디, 비밀번호, 동의한 약관 ID 리스트, 한 달 예산, 고정지출 리스트 저장합니다.
                 - 인증 유효시간인 15분이 만료되면 에러를 반환합니다.
                 """
@@ -72,5 +72,34 @@ public class MemberController {
     public ApiResponse<String> signup(@RequestBody MemberRequestDTO.SignupDTO request) {
         memberService.signup(request);
         return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_SIGNUP_SUCCESS, "회원가입이 완료되었습니다.");
+    }
+
+
+    @Operation(summary = "구글 회원가입 API by 주성아 (개발 완료)",
+            description = """
+                구글 회원가입 시 유저 정보를 저장하는 API입니다.
+                - 이름, 전화번호, 소셜ID, 동의한 약관 ID 리스트, 한 달 예산, 고정지출 리스트를 저장합니다.
+                - 인증 정보가 유효하지 않거나 만료된 경우 에러를 반환합니다.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "MEMBER200_2",
+                    description = "소셜 회원가입 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "MEMBER400_1",
+                    description = "이미 가입된 소셜 계정"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "SMS400_2",
+                    description = "인증 시간 만료 또는 유효하지 않은 요청"
+            )
+    })
+    @PostMapping("/social-signup")
+    public ApiResponse<String> socialSignup(@RequestBody MemberRequestDTO.SocialSignupDTO request) {
+        memberService.signupSocial(request);
+
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_SIGNUP_SUCCESS, "소셜 회원가입이 완료되었습니다.");
     }
 }
