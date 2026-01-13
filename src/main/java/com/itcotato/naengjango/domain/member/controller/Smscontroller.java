@@ -57,7 +57,7 @@ public class Smscontroller {
     }
 
     @Operation(
-            summary = "SMS 인증번호 검증 by 주성아",
+            summary = "SMS 인증번호 검증 by 주성아(개발 완료)",
             description = """
                 발송된 인증번호와 사용자가 입력한 번호가 일치하는지 확인합니다.
                 - `phoneNumber`: 인증받은 핸드폰 번호

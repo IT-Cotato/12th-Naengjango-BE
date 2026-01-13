@@ -13,6 +13,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByPhoneNumber(String phoneNumber);
     // 회원가입 시 아이디 중복 체크
     boolean existsByLoginId(String loginId);
+    // 소셜 타입과 소셜 ID로 회원가입 여부 확인
+    boolean existsBySocialTypeAndSocialId(SocialType socialType, String socialId);
 
     Optional<Member> findByLoginIdAndSocialType(
             String loginId,
