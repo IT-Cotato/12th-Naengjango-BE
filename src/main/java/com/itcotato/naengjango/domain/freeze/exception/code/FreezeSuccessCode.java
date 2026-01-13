@@ -27,8 +27,19 @@ public enum FreezeSuccessCode implements BaseSuccessCode {
             "회원 냉동 상품 구매가 성공적으로 완료되었습니다."),
     FREEZE_DELETE_SUCCESS(HttpStatus.OK,
             "FREEZE200_6",
-            "회원 냉동 삭제가 성공적으로 완료되었습니다.");
-
+            "회원 냉동 삭제가 성공적으로 완료되었습니다."),
+    FREEZE_EXTEND_SUCCESS(HttpStatus.OK,
+            "FREEZE200_7",
+            "회원 냉동 연장이 성공적으로 완료되었습니다."),
+    FREEZE_SUCCESS_SUCCESS(HttpStatus.OK,
+            "FREEZE200_8",
+            "회원 냉동 성공 처리가 완료되었습니다."),
+    FREEZE_FAIL_SUCCESS(HttpStatus.OK,
+            "FREEZE200_9",
+            "회원 냉동 실패 처리가 완료되었습니다."),
+    FREEZE_UPDATE_SUCCESS(HttpStatus.OK,
+            "FREEZE200_10",
+            "회원 냉동 정보 수정이 성공적으로 완료되었습니다.");
 
     private final HttpStatus status;
     private final String code;

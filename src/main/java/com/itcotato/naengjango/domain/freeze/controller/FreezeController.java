@@ -164,4 +164,104 @@ public class FreezeController {
                 null
         );
     }
+
+    /**
+     * 계속 냉동 (임시)
+     */
+    @Operation(
+            summary = "계속 냉동 by 임준서 (개발 중)",
+            description = """
+                선택한 냉동 항목들의 냉동 시간을 24시간 연장합니다.
+                - 여러 냉동 항목을 한 번에 처리합니다.
+                """
+    )
+    @PostMapping("/extend")
+    public ApiResponse<FreezeResponseDto.BatchResultResponse> extendFreeze(
+            @RequestBody FreezeRequestDto.BatchRequest request
+    ) {
+        return ApiResponse.onSuccess(
+                FreezeSuccessCode.FREEZE_EXTEND_SUCCESS,
+                FreezeResponseDto.BatchResultResponse.from(
+                        request.freezeItemIds(),
+                        "계속 냉동 처리 완료"
+                )
+        );
+    }
+
+    /**
+     * 냉동 성공 (임시)
+     */
+    @Operation(
+            summary = "냉동 성공 by 임준서 (개발 중)",
+            description = """
+                선택한 냉동 항목들을 구매하지 않은 것으로 처리합니다.
+                - 소비를 하지 않은 성공 케이스입니다.
+                """
+    )
+    @PostMapping("/success")
+    public ApiResponse<FreezeResponseDto.BatchResultResponse> freezeSuccess(
+            @RequestBody FreezeRequestDto.BatchRequest request
+    ) {
+        return ApiResponse.onSuccess(
+                FreezeSuccessCode.FREEZE_SUCCESS_SUCCESS,
+                FreezeResponseDto.BatchResultResponse.from(
+                        request.freezeItemIds(),
+                        "냉동 성공 처리 완료"
+                )
+        );
+    }
+
+    /**
+     * 냉동 실패 (임시)
+     */
+    @Operation(
+            summary = "냉동 실패 by 임준서 (개발 중)",
+            description = """
+                선택한 냉동 항목들을 구매 처리합니다.
+                - 냉동을 실패하고 실제 구매한 경우입니다.
+                """
+    )
+    @PostMapping("/fail")
+    public ApiResponse<FreezeResponseDto.BatchResultResponse> freezeFail(
+            @RequestBody FreezeRequestDto.BatchRequest request
+    ) {
+        return ApiResponse.onSuccess(
+                FreezeSuccessCode.FREEZE_FAIL_SUCCESS,
+                FreezeResponseDto.BatchResultResponse.from(
+                        request.freezeItemIds(),
+                        "냉동 실패(구매) 처리 완료"
+                )
+        );
+    }
+
+    /**
+     * 냉동 수정
+     */
+    @Operation(
+            summary = "냉동 수정 (임시)",
+            description = """
+                냉동 항목의 정보를 수정합니다.
+                - 냉동 상태(FROZEN)인 항목만 수정 가능합니다.
+                - 상태 변경은 별도 API를 사용합니다.
+                """
+    )
+    @PatchMapping("/{freezeId}")
+    public ApiResponse<FreezeResponseDto.DetailResponse> updateFreeze(
+            @PathVariable Long freezeId,
+            @RequestBody FreezeRequestDto.UpdateRequest request
+    ) {
+        return ApiResponse.onSuccess(
+                FreezeSuccessCode.FREEZE_UPDATE_SUCCESS,
+                new FreezeResponseDto.DetailResponse(
+                        freezeId,
+                        request.appName(),
+                        request.itemName(),
+                        request.price(),
+                        FreezeStatus.FROZEN,
+                        LocalDateTime.now().minusHours(1),
+                        // 임시 응답이므로 서비스 로직에서 계산된 deadline 대신 고정값 사용
+                        LocalDateTime.now().plusHours(24)
+                )
+        );
+    }
 }
