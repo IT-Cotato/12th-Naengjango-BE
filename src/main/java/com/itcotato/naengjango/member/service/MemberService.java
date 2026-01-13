@@ -14,12 +14,12 @@ public class MemberService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public MyPageDto.MeResponse getMe(Long userId) {
-        Member member = memberRepository.findById(userId)
+    public MyPageDto.MeResponse getMe(Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         return new MyPageDto.MeResponse(
-                member.getUserId(),
+                member.getMemberId(),
                 member.getName(),
                 member.getLoginId(),
                 member.getPhoneNumber(),
@@ -30,16 +30,16 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public MyPageDto.BudgetResponse getBudget(Long userId) {
-        Member member = memberRepository.findById(userId)
+    public MyPageDto.BudgetResponse getBudget(Long memberId) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         return new MyPageDto.BudgetResponse(member.getBudget());
     }
 
     @Transactional
-    public MyPageDto.BudgetResponse updateBudget(Long userId, MyPageDto.UpdateBudgetRequest req) {
-        Member member = memberRepository.findById(userId)
+    public MyPageDto.BudgetResponse updateBudget(Long memberId, MyPageDto.UpdateBudgetRequest req) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         member.updateBudget(req.budget());
