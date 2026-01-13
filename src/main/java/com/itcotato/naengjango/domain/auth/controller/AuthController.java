@@ -66,16 +66,17 @@ public class AuthController {
         return ApiResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, response);
     }
 
-
     /**
      * 소셜 로그인
      */
     @Operation(
             summary = "소셜 로그인 by 임준서 (개발 완료)",
             description = """
-                            기본 사용자 로그인 API 입니다.
-                            - 요청 바디에 username과 password를 포함하여 전송합니다.
-                            - 성공 시 access token과 refresh token을 반환합니다.
+                            소셜 로그인 API 입니다.
+                            - 소셜 타입(GOOGLE)에 따라 경로를 지정합니다.
+                            - 요청 바디에 소셜 액세스 토큰을 포함하여 전송합니다.
+                            - 기존 연동 계정일 경우 access token과 refresh token을 반환합니다.
+                            - 최초 연동 계정일 경우 추가 회원가입 정보가 필요함을 알리는 응답을 반환합니다.
                     """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
