@@ -1,0 +1,100 @@
+package com.itcotato.naengjango.domain.member.service;
+
+import com.itcotato.naengjango.domain.member.exception.MemberException;
+import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
+import com.itcotato.naengjango.domain.member.repository.MemberRepository;
+import net.nurigo.sdk.NurigoApp;
+import net.nurigo.sdk.message.model.Message;
+import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
+import net.nurigo.sdk.message.service.DefaultMessageService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class SmsService {
+    private final DefaultMessageService messageService;
+    private final String fromNumber;
+    private final StringRedisTemplate redisTemplate; // Redis 연결용
+    private final MemberRepository memberRepository;
+
+    // 인증번호 저장용 키
+    private static final String SMS_PREFIX = "sms:";
+    // 인증 완료 상태 저장용 키
+    private final String VERIFIED_PREFIX = "sms:verified:";
+
+    public SmsService(
+            @Value("${coolsms.api.key}") String apiKey,
+            @Value("${coolsms.api.secret}") String apiSecret,
+            @Value("${coolsms.from}") String fromNumber,
+            StringRedisTemplate redisTemplate, MemberRepository memberRepository) {
+        this.messageService = NurigoApp.INSTANCE.initialize(apiKey, apiSecret, "https://api.coolsms.co.kr");
+        this.fromNumber = fromNumber;
+        this.redisTemplate = redisTemplate;
+        this.memberRepository = memberRepository;
+    }
+
+    /**
+     * 인증번호를 생성하고 발송하며, Redis에 5분간 저장
+     * 이미 가입한 전화번호라면 인증번호 생성 불가
+     */
+    public String sendVerificationSms(String phoneNumber) {
+        // 이미 회원가입된 전화번호일 때
+        if (memberRepository.existsByPhoneNumber(phoneNumber)) {
+            return "ALREADY_EXISTS";
+        }
+
+        // 1. 4자리 인증번호 랜덤 생성
+        String verificationCode = String.format("%04d", new Random().nextInt(10000));
+
+        // 2. 인증문자 생성
+        Message message = new Message();
+        message.setFrom(fromNumber);
+        message.setTo(phoneNumber);
+        message.setText("[냉잔고] 인증번호는 [" + verificationCode + "] 입니다.");
+
+        // 3. 인증문자 전송
+        try {
+            this.messageService.sendOne(new SingleMessageSendingRequest(message));
+
+            // Redis에 저장 (Key: sms:010..., Value: 인증번호, TTL: 5분)
+            redisTemplate.opsForValue().set(
+                    SMS_PREFIX + phoneNumber,
+                    verificationCode,
+                    5,
+                    TimeUnit.MINUTES
+            );
+            return "SUCCESS";
+
+        } catch (Exception e) {
+            throw new MemberException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 입력받은 번호가 Redis에 저장된 번호와 일치하는지 확인
+     * 인증 성공 시 인증상태 15분간 저장
+     */
+    public String verifyCode(String phoneNumber, String inputCode) {
+        String savedCode = redisTemplate.opsForValue().get(SMS_PREFIX + phoneNumber);
+
+        // 1. 인증번호가 만료되었을 때
+        if (savedCode == null) {
+            return "EXPIRED";
+        }
+
+        // 2. 인증번호가 틀렸을 때
+        if (!savedCode.equals(inputCode)) {
+            return "MISMATCH";
+        }
+
+        // 3. 인증 성공 시 redis에서 데이터 삭제 + 인증 완료 상태를 15분간 저장
+        redisTemplate.delete(SMS_PREFIX + phoneNumber);
+        redisTemplate.opsForValue().set(VERIFIED_PREFIX + phoneNumber, "true", 15, TimeUnit.MINUTES);
+
+        return "SUCCESS";
+    }
+}
