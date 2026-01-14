@@ -19,7 +19,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: mappings,health
+        include: "mappings,health,info"
+
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
 
 jwt:
   secret: ${JWT_SECRET}

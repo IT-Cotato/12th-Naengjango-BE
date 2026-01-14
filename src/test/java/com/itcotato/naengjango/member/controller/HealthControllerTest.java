@@ -1,4 +1,4 @@
-package com.itcotato.naengjango;
+package com.itcotato.naengjango.member.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
