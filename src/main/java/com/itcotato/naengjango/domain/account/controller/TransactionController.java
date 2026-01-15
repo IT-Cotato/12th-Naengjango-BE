@@ -28,9 +28,9 @@ public class TransactionController {
      * 문자 내역 파싱
      */
     @Operation(
-            summary = "문자 내역 파싱 by 주성아 (개발 중)",
+            summary = "문자 내역 파싱 by 주성아 (개발 완료)",
             description = """
-                결제 문자 텍스트를 파싱해 지출 정보를 자동으로 추출합니다.
+                은행 및 카드사로부터 받은 결제/입금 문자 텍스트를 분석하여 가계부 데이터를 자동으로 추출합니다.
                 
                 ### Request Body
                 - **rawText**: 분석할 원문 문자 내용 (예: "신한카드 승인 GS25 2,200원 02/21 14:30")
@@ -47,6 +47,18 @@ public class TransactionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "PARSE200_1",
                     description = "문자 내역 파싱 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "PARSE400_1",
+                    description = "거래 내역 문자가 아닌 일반 텍스트임"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "PARSE400_3",
+                    description = "텍스트에서 금액 또는 날짜 정보를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "PARSE400_4",
+                    description = "분석 실패"
             )
     })
     @PostMapping("/parser")

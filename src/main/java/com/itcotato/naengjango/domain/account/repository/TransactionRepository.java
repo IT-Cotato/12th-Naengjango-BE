@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    /**
+     * 예산 상태 조회 관련
+     */
     @Query("SELECT SUM(t.amount) FROM Transaction t " +
             "WHERE t.member.id = :memberId " +
             "AND t.type = 'EXPENSE' " +
