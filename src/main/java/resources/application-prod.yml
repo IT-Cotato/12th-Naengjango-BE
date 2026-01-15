@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,mappings
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration-ms: 1800000
+  refresh-token-expiration-ms: 1209600000
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+
+coolsms:
+  api:
+    key: ${COOL_SMS_API_KEY}
+    secret: ${COOL_SMS_API_SECRET}
+  from: ${COOL_SMS_FROM_PHONE_NUMBER}
