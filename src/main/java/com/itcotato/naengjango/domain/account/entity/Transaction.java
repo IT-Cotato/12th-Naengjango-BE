@@ -18,10 +18,11 @@ import java.time.LocalDateTime;
 public class Transaction extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // ERD 기준 user_id
+    @JoinColumn(name = "user_id")
     private Member member;
 
     @Enumerated(EnumType.STRING)
