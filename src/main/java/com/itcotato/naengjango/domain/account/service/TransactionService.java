@@ -114,4 +114,40 @@ public class TransactionService {
         }
     }
 
+    /**
+     * 가계부 내역 수정
+     */
+    @Transactional
+    public void updateTransaction(Long memberId, Long transactionId, TransactionRequestDTO.UpdateDTO request) {
+        // 1. 수정할 내역 조회
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
+
+        // 2. 로그인된 memberId의 데이터인지 확인
+        if (!transaction.getMember().getId().equals(memberId)) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        // 3. 필드 업데이트
+        if (request.getType() != null) {
+            transaction.setType(request.getType().equals("수입") ? TransactionType.INCOME : TransactionType.EXPENSE);
+        }
+
+        if (request.getAmount() != null) {
+            if (request.getAmount() <= 0) throw new GeneralException(AccountErrorCode.INVALID_TRANSACTION_AMOUNT);
+            transaction.setAmount(request.getAmount());
+        }
+
+        if (request.getDescription() != null) {
+            transaction.setDescription(request.getDescription());
+        }
+
+        if (request.getMemo() != null) {
+            transaction.setMemo(request.getMemo());
+        }
+
+        if (request.getCategory() != null) {
+            transaction.setCategory(request.getCategory());
+        }
+    }
 }

@@ -129,7 +129,7 @@ public class TransactionController {
                     description = "가계부 내역 조회 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "TRANSACTION400_6",
+                    responseCode = "TRANSACTION400_5",
                     description = "날짜 형식 오류(yyyy-MM-dd 형식이 아님)"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -151,6 +151,36 @@ public class TransactionController {
     /**
      * 가계부 내역 수정
      */
+    @Operation(
+            summary = "가계부 내역 수정 by 주성아 (개발 완료)",
+            description = """
+            기존에 저장된 가계부 내역의 금액 등을 수정합니다.
+            - 본인의 내역만 수정 가능합니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT200_2",
+                    description = "내역 수정 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION404_1",
+                    description = "내역 조회 실패"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "수정 권한 없음"
+            )
+    })
+    @PatchMapping("/transactions/{transaction_id}")
+    public ApiResponse<Boolean> updateTransaction(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable(name = "transaction_id") Long transactionId,
+            @RequestBody TransactionRequestDTO.UpdateDTO request) {
+
+        transactionService.updateTransaction(memberId, transactionId, request);
+        return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_UPDATE_SUCCESS, true);
+    }
 
     /**
      * 가계부 내역 삭제
