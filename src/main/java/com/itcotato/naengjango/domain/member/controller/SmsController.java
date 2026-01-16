@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/sms")
 public class SmsController {
+
     private final SmsService smsService;
 
     @Operation(summary = "SMS 인증번호 발송 by 주성아 (개발 완료)",
