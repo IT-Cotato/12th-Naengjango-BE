@@ -26,7 +26,10 @@ public enum AccountErrorCode implements BaseErrorCode {
     INVALID_TRANSACTION_AMOUNT(HttpStatus.BAD_REQUEST, "TRANSACTION400_1", "금액은 0원보다 커야 합니다."),
     INVALID_TRANSACTION_DATE(HttpStatus.BAD_REQUEST, "TRANSACTION400_2", "날짜 형식이 올바르지 않습니다. (yyyy-MM-dd)"),
     MISSING_TRANSACTION_REQUIRED(HttpStatus.BAD_REQUEST, "TRANSACTION400_3", "필수 입력 항목(내역/카테고리)이 누락되었습니다."),
-    TRANSACTION_SAVE_FAILED(HttpStatus.BAD_REQUEST, "TRANSACTION400_4", "내역 저장 중 오류가 발생했습니다.");
+    TRANSACTION_SAVE_FAILED(HttpStatus.BAD_REQUEST, "TRANSACTION400_4", "내역 저장 중 오류가 발생했습니다."),
+
+    // 가계부 내역 조회 관련 에러 코드
+    INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "TRANSACTION400_5", "조회하는 날짜 형식이 올바르지 않습니다. (yyyy-MM-dd)");
 
     private final HttpStatus status;
     private final String code;

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/accounts")
@@ -108,4 +110,49 @@ public class TransactionController {
         transactionService.saveTransaction(memberId, request);
         return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, true);
     }
+
+    /**
+     * 날짜별 내역 조회
+     */
+
+    @Operation(
+            summary = "날짜별 내역 조회 by 주성아(개발 완료)",
+            description = """
+            현재 로그인한 사용자의 특정 날짜에 해당하는 가계부 지출/수입 내역 리스트를 조회합니다.
+            - 본인 확인: `@AuthenticationPrincipal`을 통해 본인의 데이터만 조회할 수 있도록 권한을 검증합니다.
+            - 날짜 범위 조회: 입력받은 `date` 파라미터를 기준으로 당일 `00:00:00`부터 `23:59:59` 사이의 모든 내역을 가져옵니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "COMMON200",
+                    description = "가계부 내역 조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION400_6",
+                    description = "날짜 형식 오류(yyyy-MM-dd 형식이 아님)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "조회 권한 없음"
+            )
+    })
+
+    @GetMapping("/transactions")
+    public ApiResponse<List<TransactionResponseDTO.TransactionListDTO>> getTransactions(
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam(name = "date") String date) {
+
+        List<TransactionResponseDTO.TransactionListDTO> result = transactionService.getTransactionsByDate(memberId, date);
+
+        return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_STATUS_SUCCESS, result);
+    }
+
+    /**
+     * 가계부 내역 수정
+     */
+
+    /**
+     * 가계부 내역 삭제
+     */
 }

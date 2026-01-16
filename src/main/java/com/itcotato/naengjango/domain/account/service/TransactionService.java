@@ -1,6 +1,7 @@
 package com.itcotato.naengjango.domain.account.service;
 
 import com.itcotato.naengjango.domain.account.dto.TransactionRequestDTO;
+import com.itcotato.naengjango.domain.account.dto.TransactionResponseDTO;
 import com.itcotato.naengjango.domain.account.entity.Transaction;
 import com.itcotato.naengjango.domain.account.enums.PaymentMethod;
 import com.itcotato.naengjango.domain.account.enums.TransactionType;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +74,43 @@ public class TransactionService {
         if (request.getDescription() == null || request.getDescription().isBlank() ||
                 request.getCategory() == null || request.getCategory().isBlank()) {
             throw new GeneralException(AccountErrorCode.MISSING_TRANSACTION_REQUIRED);
+        }
+    }
+
+    /**
+     * 날짜별 가계부 내역 조회
+     */
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDTO.TransactionListDTO> getTransactionsByDate(Long memberId, String date) {
+        // 1. 조회 권한이 있는지 확인
+        if (memberId == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        try {
+            // 2. 날짜 파싱 및 범위 설정
+            LocalDateTime startOfDay = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime endOfDay = LocalDateTime.parse(date + "T23:59:59");
+
+            // 3. 로그인된 memberId의 데이터 조회
+            List<Transaction> transactions = transactionRepository.findAllByMemberIdAndDateBetween(
+                    memberId, startOfDay, endOfDay);
+
+            // 4. DTO 변환
+            return transactions.stream()
+                    .map(t -> TransactionResponseDTO.TransactionListDTO.builder()
+                            .type(t.getType().name().equals("INCOME") ? "수입" : "지출")
+                            .amount(t.getAmount())
+                            .description(t.getDescription())
+                            .memo(t.getMemo())
+                            .date(t.getDate().toLocalDate().toString())
+                            .category(t.getCategory())
+                            .build())
+                    .collect(Collectors.toList());
+
+        } catch (DateTimeParseException e) {
+            // 날짜 형식이 yyyy-MM-dd가 아닌 경우
+            throw new GeneralException(AccountErrorCode.INVALID_DATE_FORMAT);
         }
     }
 
