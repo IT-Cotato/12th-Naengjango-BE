@@ -150,4 +150,26 @@ public class TransactionService {
             transaction.setCategory(request.getCategory());
         }
     }
+
+    /**
+     * 가계부 내역 삭제
+     */
+    @Transactional
+    public void deleteTransaction(Long memberId, Long transactionId) {
+        // 1. 삭제할 내역 조회
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
+
+        // 2. 로그인된 memberId의 데이터인지 확인
+        if (!transaction.getMember().getId().equals(memberId)) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        try {
+            // 3. DB에서 삭제
+            transactionRepository.delete(transaction);
+        } catch (Exception e) {
+            throw new GeneralException(AccountErrorCode.TRANSACTION_DELETE_FAILED);
+        }
+    }
 }

@@ -6,7 +6,6 @@ import com.itcotato.naengjango.domain.account.exception.code.AccountSuccessCode;
 import com.itcotato.naengjango.domain.account.service.TransactionParser;
 import com.itcotato.naengjango.domain.account.service.TransactionService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
-import com.itcotato.naengjango.global.security.userdetails.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 //import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -162,7 +161,7 @@ public class TransactionController {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "ACCOUNT200_2",
+                    responseCode = "TRANSACTION200_2",
                     description = "내역 수정 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -181,10 +180,44 @@ public class TransactionController {
             @RequestBody TransactionRequestDTO.UpdateDTO request) {
 
         transactionService.updateTransaction(memberId, transactionId, request);
-        return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_UPDATE_SUCCESS, true);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_UPDATE_SUCCESS, true);
     }
 
     /**
      * 가계부 내역 삭제
      */
+    @Operation(
+            summary = "가계부 내역 삭제 by 주성아 (개발 완료)",
+            description = """
+            저장된 가계부 내역을 삭제합니다.
+            - 본인의 내역만 삭제 가능합니다.
+            - 삭제된 데이터는 복구할 수 없습니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION200_3",
+                    description = "내역 삭제 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION404_1",
+                    description = "해당 내역을 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "삭제 권한이 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT400_6",
+                    description = "삭제 중 오류 발생"
+            )
+    })
+    @DeleteMapping("/transactions/{transaction_id}")
+    public ApiResponse<Boolean> deleteTransaction(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable(name = "transaction_id") Long transactionId) {
+
+        transactionService.deleteTransaction(memberId, transactionId);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_DELETE_SUCCESS, true);
+    }
 }

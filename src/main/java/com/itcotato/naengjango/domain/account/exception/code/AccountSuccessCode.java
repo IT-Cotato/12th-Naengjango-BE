@@ -21,7 +21,10 @@ public enum AccountSuccessCode implements BaseSuccessCode {
     TRANSACTION_SAVE_SUCCESS(HttpStatus.OK, "TRANSACTION200_1", "내역이 저장되었습니다."),
 
     // 가계부 내역 수정 관련 성공 코드
-    ACCOUNT_UPDATE_SUCCESS(HttpStatus.OK, "ACCOUNT200_2", "내역이 수정되었습니다.");
+    TRANSACTION_UPDATE_SUCCESS(HttpStatus.OK, "TRANSACTION200_2", "내역이 수정되었습니다."),
+
+    // 가계부 내역 삭제 관련 성공 코드
+    TRANSACTION_DELETE_SUCCESS(HttpStatus.OK, "TRANSACTION200_3", "내역이 삭제되었습니다.");
 
     private final HttpStatus status;
     private final String code;
