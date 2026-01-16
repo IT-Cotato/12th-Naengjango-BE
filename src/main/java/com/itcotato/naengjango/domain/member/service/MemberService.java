@@ -1,6 +1,7 @@
 package com.itcotato.naengjango.domain.member.service;
 
 import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
+import com.itcotato.naengjango.domain.member.dto.MyPageDto;
 import com.itcotato.naengjango.domain.member.entity.Agreement;
 import com.itcotato.naengjango.domain.member.entity.FixedExpenditure;
 import com.itcotato.naengjango.domain.member.entity.Member;
@@ -131,10 +132,44 @@ public class MemberService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public MyPageDto.MeResponse getMe(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        return new MyPageDto.MeResponse(
+                member.getId(),
+                member.getName(),
+                member.getLoginId(),
+                member.getPhoneNumber(),
+                member.getBudget(),
+                member.getSocialType().name(),
+                member.getRole().name()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public MyPageDto.BudgetResponse getBudget(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        return new MyPageDto.BudgetResponse(member.getBudget());
+    }
+
+    @Transactional
+    public MyPageDto.BudgetResponse updateBudget(Long memberId, MyPageDto.UpdateBudgetRequest req) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        member.updateBudget(req.budget());
+        return new MyPageDto.BudgetResponse(member.getBudget());
+    }
+
     private void validateSmsVerification(String phoneNumber) {
         String isVerified = redisTemplate.opsForValue().get(VERIFIED_PREFIX + phoneNumber);
         if (isVerified == null || !isVerified.equals("true")) {
             throw new GeneralException(SmsErrorCode.SMS_VERIFY_EXPIRED);
         }
     }
+
 }

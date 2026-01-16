@@ -86,4 +86,12 @@ public class Member extends BaseEntity {
         return this.socialType != SocialType.LOCAL;
     }
 
+    public Long getMemberId() {
+        return this.id;
+    }
+
+    public void updateBudget(Integer budget) {
+        this.budget = budget;
+    }
+
 }
