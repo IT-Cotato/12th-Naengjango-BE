@@ -33,4 +33,19 @@ public class TransactionRequestDTO {
         private String date;        // 결제 날짜
         private String category;    // 카테고리
     }
+
+    /**
+     * 가계부 내역 수정 관련 DTO
+     */
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UpdateDTO {
+        private String type;        // 분류(수입/지출)
+        private Long amount;        // 금액
+        private String description; // 내역
+        private String memo;        // 메모
+        private String category;    // 카테고리
+    }
 }

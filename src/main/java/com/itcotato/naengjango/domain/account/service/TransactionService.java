@@ -1,6 +1,7 @@
 package com.itcotato.naengjango.domain.account.service;
 
 import com.itcotato.naengjango.domain.account.dto.TransactionRequestDTO;
+import com.itcotato.naengjango.domain.account.dto.TransactionResponseDTO;
 import com.itcotato.naengjango.domain.account.entity.Transaction;
 import com.itcotato.naengjango.domain.account.enums.PaymentMethod;
 import com.itcotato.naengjango.domain.account.enums.TransactionType;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -74,4 +77,99 @@ public class TransactionService {
         }
     }
 
+    /**
+     * 날짜별 가계부 내역 조회
+     */
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDTO.TransactionListDTO> getTransactionsByDate(Long memberId, String date) {
+        // 1. 조회 권한이 있는지 확인
+        if (memberId == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        try {
+            // 2. 날짜 파싱 및 범위 설정
+            LocalDateTime startOfDay = LocalDateTime.parse(date + "T00:00:00");
+            LocalDateTime endOfDay = LocalDateTime.parse(date + "T23:59:59");
+
+            // 3. 로그인된 memberId의 데이터 조회
+            List<Transaction> transactions = transactionRepository.findAllByMemberIdAndDateBetween(
+                    memberId, startOfDay, endOfDay);
+
+            // 4. DTO 변환
+            return transactions.stream()
+                    .map(t -> TransactionResponseDTO.TransactionListDTO.builder()
+                            .type(t.getType().name().equals("INCOME") ? "수입" : "지출")
+                            .amount(t.getAmount())
+                            .description(t.getDescription())
+                            .memo(t.getMemo())
+                            .date(t.getDate().toLocalDate().toString())
+                            .category(t.getCategory())
+                            .build())
+                    .collect(Collectors.toList());
+
+        } catch (DateTimeParseException e) {
+            // 날짜 형식이 yyyy-MM-dd가 아닌 경우
+            throw new GeneralException(AccountErrorCode.INVALID_DATE_FORMAT);
+        }
+    }
+
+    /**
+     * 가계부 내역 수정
+     */
+    @Transactional
+    public void updateTransaction(Long memberId, Long transactionId, TransactionRequestDTO.UpdateDTO request) {
+        // 1. 수정할 내역 조회
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
+
+        // 2. 로그인된 memberId의 데이터인지 확인
+        if (!transaction.getMember().getId().equals(memberId)) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        // 3. 필드 업데이트
+        if (request.getType() != null) {
+            transaction.setType(request.getType().equals("수입") ? TransactionType.INCOME : TransactionType.EXPENSE);
+        }
+
+        if (request.getAmount() != null) {
+            if (request.getAmount() <= 0) throw new GeneralException(AccountErrorCode.INVALID_TRANSACTION_AMOUNT);
+            transaction.setAmount(request.getAmount());
+        }
+
+        if (request.getDescription() != null) {
+            transaction.setDescription(request.getDescription());
+        }
+
+        if (request.getMemo() != null) {
+            transaction.setMemo(request.getMemo());
+        }
+
+        if (request.getCategory() != null) {
+            transaction.setCategory(request.getCategory());
+        }
+    }
+
+    /**
+     * 가계부 내역 삭제
+     */
+    @Transactional
+    public void deleteTransaction(Long memberId, Long transactionId) {
+        // 1. 삭제할 내역 조회
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
+
+        // 2. 로그인된 memberId의 데이터인지 확인
+        if (!transaction.getMember().getId().equals(memberId)) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
+        try {
+            // 3. DB에서 삭제
+            transactionRepository.delete(transaction);
+        } catch (Exception e) {
+            throw new GeneralException(AccountErrorCode.TRANSACTION_DELETE_FAILED);
+        }
+    }
 }

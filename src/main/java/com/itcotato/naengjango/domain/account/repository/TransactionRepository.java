@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     /**
@@ -18,4 +19,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Long sumExpenseByMemberAndDate(@Param("memberId") Long memberId,
                                    @Param("startDay") LocalDateTime startDay,
                                    @Param("endDay") LocalDateTime endDay);
+
+
+    /**
+     * 날짜별 가계부 내역 조회 관련
+     */
+    List<Transaction> findAllByMemberIdAndDateBetween(
+            Long memberId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }

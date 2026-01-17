@@ -6,9 +6,9 @@ import com.itcotato.naengjango.domain.account.exception.code.AccountSuccessCode;
 import com.itcotato.naengjango.domain.account.service.TransactionParser;
 import com.itcotato.naengjango.domain.account.service.TransactionService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
-import com.itcotato.naengjango.global.security.userdetails.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 //import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
+@Tag(name = "가계부", description = "가계부 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/accounts")
@@ -107,5 +110,114 @@ public class TransactionController {
 
         transactionService.saveTransaction(memberId, request);
         return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, true);
+    }
+
+    /**
+     * 날짜별 내역 조회
+     */
+
+    @Operation(
+            summary = "날짜별 내역 조회 by 주성아(개발 완료)",
+            description = """
+            현재 로그인한 사용자의 특정 날짜에 해당하는 가계부 지출/수입 내역 리스트를 조회합니다.
+            - 본인 확인: `@AuthenticationPrincipal`을 통해 본인의 데이터만 조회할 수 있도록 권한을 검증합니다.
+            - 날짜 범위 조회: 입력받은 `date` 파라미터를 기준으로 당일 `00:00:00`부터 `23:59:59` 사이의 모든 내역을 가져옵니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "COMMON200",
+                    description = "가계부 내역 조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION400_5",
+                    description = "날짜 형식 오류(yyyy-MM-dd 형식이 아님)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "조회 권한 없음"
+            )
+    })
+
+    @GetMapping("/transactions")
+    public ApiResponse<List<TransactionResponseDTO.TransactionListDTO>> getTransactions(
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam(name = "date") String date) {
+
+        List<TransactionResponseDTO.TransactionListDTO> result = transactionService.getTransactionsByDate(memberId, date);
+
+        return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_STATUS_SUCCESS, result);
+    }
+
+    /**
+     * 가계부 내역 수정
+     */
+    @Operation(
+            summary = "가계부 내역 수정 by 주성아 (개발 완료)",
+            description = """
+            기존에 저장된 가계부 내역의 금액 등을 수정합니다.
+            - 본인의 내역만 수정 가능합니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION200_2",
+                    description = "내역 수정 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION404_1",
+                    description = "내역 조회 실패"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "수정 권한 없음"
+            )
+    })
+    @PatchMapping("/transactions/{transaction_id}")
+    public ApiResponse<Boolean> updateTransaction(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable(name = "transaction_id") Long transactionId,
+            @RequestBody TransactionRequestDTO.UpdateDTO request) {
+
+        transactionService.updateTransaction(memberId, transactionId, request);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_UPDATE_SUCCESS, true);
+    }
+
+    /**
+     * 가계부 내역 삭제
+     */
+    @Operation(
+            summary = "가계부 내역 삭제 by 주성아 (개발 완료)",
+            description = """
+            저장된 가계부 내역을 삭제합니다.
+            - 본인의 내역만 삭제 가능합니다.
+            - 삭제된 데이터는 복구할 수 없습니다.
+            """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION200_3",
+                    description = "내역 삭제 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "TRANSACTION404_1",
+                    description = "해당 내역을 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT403_1",
+                    description = "삭제 권한이 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "ACCOUNT400_6",
+                    description = "삭제 중 오류 발생"
+            )
+    })
+    @DeleteMapping("/transactions/{transaction_id}")
+    public ApiResponse<Boolean> deleteTransaction(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable(name = "transaction_id") Long transactionId) {
+
+        transactionService.deleteTransaction(memberId, transactionId);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_DELETE_SUCCESS, true);
     }
 }

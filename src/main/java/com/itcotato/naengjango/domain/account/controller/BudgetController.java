@@ -6,6 +6,7 @@ import com.itcotato.naengjango.domain.account.service.BudgetService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 남은 예산 정보(오늘 예산/이번달 예산) 조회 관련 컨트롤러
  */
 
+@Tag(name = "예산 조회", description = "남은 예산 정보(오늘 예산/이번달 예산) 조회 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/accounts")
