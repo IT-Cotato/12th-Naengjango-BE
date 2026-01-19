@@ -66,8 +66,14 @@ public class ReportService {
                 })
                 .toList();
 
-        // 4. 오늘 가용 예산
-        Long todayAvailable = availableTrends.get(availableTrends.size() - 1).getAmount();
+//        // 4. 오늘 가용 예산
+//        Long todayAvailable = availableTrends.get(availableTrends.size() - 1).getAmount();
+
+        // 4. [추가] 오늘 가용 예산 및 어제 대비 증감 수치 계산
+        // availableTrends의 마지막 인덱스(7)는 오늘, 그 앞(6)은 어제입니다.
+        Long todayAvailable = availableTrends.get(7).getAmount();
+        Long yesterdayAvailable = availableTrends.get(6).getAmount();
+        Long diffFromYesterday = todayAvailable - yesterdayAvailable;
 
         // 5. 파산 예측을 위한 지출 데이터 조회
         List<Object[]> results = reportRepository.findDailyTrendsRaw(memberId, today.minusDays(7).atStartOfDay());
@@ -108,9 +114,11 @@ public class ReportService {
                 })
                 .toList();
 
+        // 8. 최종 반환 (diffFromYesterday 포함)
         return ReportResponseDTO.DailyBudgetReportDTO.builder()
                 .todayAvailable(todayAvailable)
-                .dailyTrends(availableTrends) // 가용 예산 추이 전달
+                .diffFromYesterday(diffFromYesterday)
+                .dailyTrends(availableTrends)
                 .bankruptcyPrediction(bankruptcyPrediction)
                 .build();
     }
