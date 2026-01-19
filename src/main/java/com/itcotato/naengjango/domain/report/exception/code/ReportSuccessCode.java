@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ReportSuccessCode implements BaseSuccessCode {
-    //  하루 가용 예산 추이 변화와 파산 시나리오 관련 성공 코드
+    //  분석 리포트 성공 코드
     REPORT_GET_SUCCESS(HttpStatus.OK, "REPORT200_1", "분석 리포트 조회에 성공하였습니다.");
 
     private final HttpStatus status;

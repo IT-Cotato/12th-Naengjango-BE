@@ -4,5 +4,5 @@ public enum FreezeStatus {
     FROZEN,      // 냉동 중
     AVAILABLE,   // 해동 가능 상태 (기한 도달)
     PURCHASED,   // 구매 완료
-    CANCELLED    // 취소
+    SUCCESS    // 취소
 }
