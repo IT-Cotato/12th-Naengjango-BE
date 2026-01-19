@@ -122,6 +122,17 @@ public class TransactionController {
             현재 로그인한 사용자의 특정 날짜에 해당하는 가계부 지출/수입 내역 리스트를 조회합니다.
             - 본인 확인: `@AuthenticationPrincipal`을 통해 본인의 데이터만 조회할 수 있도록 권한을 검증합니다.
             - 날짜 범위 조회: 입력받은 `date` 파라미터를 기준으로 당일 `00:00:00`부터 `23:59:59` 사이의 모든 내역을 가져옵니다.
+            
+            ### Params
+                - **date**: 날짜 yy-MM-dd 형식 (예: 2026-02-21)
+                
+           ### Response Result
+                - **type**: 지출/수입 구분
+                - **amount**: 금액
+                - **description**: 결제처 정보
+                - **memo**: 메모
+                - **date**: 날짜
+                - **category**: 카테고리
             """
     )
     @ApiResponses({

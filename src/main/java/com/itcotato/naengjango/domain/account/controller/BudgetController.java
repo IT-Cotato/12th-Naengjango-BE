@@ -31,6 +31,16 @@ public class BudgetController {
                 - 오늘의 예산 = (한달 전체 예산 - 어제까지의 총 지출액) / (이번 달 남은 일수)
                 - 사용자가 어제 지출을 아꼈다면 오늘 사용할 수 있는 예산이 자동으로 증액됩니다.
                 - 계산된 예산보다 지출이 클 경우 마이너스(-)가 아닌 0원으로 반환합니다.
+                
+                ### Params
+                - **year**: 연도 (예: 2026)
+                - **month**: 월 (예: 1)
+                - **day**: 일 (예: 13)
+                - **예시 형식**: ?year=2026&month=1&day=13
+                
+                ### Response Result
+                - **todayRemaining**: 오늘의 남은 예산 (예: 1000)
+                - **monthRemaining**: 이달의 남은 예산 (예: 30000)
                 """
     )
     @ApiResponses({
