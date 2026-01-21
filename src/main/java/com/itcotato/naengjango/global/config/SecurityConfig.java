@@ -48,7 +48,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/actuator/**",
+                                "/api/auth/login",
+                                "/api/auth/login/**",
+                                "/auth/login", "/auth/login/**"
                         ).permitAll()
                         // 로그인 없이 허용 가능한 경로
                         .requestMatchers("/api/sms/**", "/swagger-ui/**", "/v3/api-docs/**",
