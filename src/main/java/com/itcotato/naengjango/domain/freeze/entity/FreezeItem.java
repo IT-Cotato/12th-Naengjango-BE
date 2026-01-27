@@ -71,27 +71,59 @@ public class FreezeItem extends BaseEntity {
     private FreezeStatus status;
 
     /* =========================
+       생성 로직
+       ========================= */
+
+    public static FreezeItem create(Member member,
+                                    String appName,
+                                    String itemName,
+                                    int price,
+                                    LocalDateTime deadline) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime resolvedDeadline = (deadline != null) ? deadline : now.plusHours(24);
+
+        return FreezeItem.builder()
+                .member(member)
+                .appName(appName)
+                .itemName(itemName)
+                .price(price)
+                .frozenAt(now)
+                .deadline(resolvedDeadline)
+                .status(FreezeStatus.FROZEN)
+                .build();
+    }
+
+    /* =========================
        비즈니스 로직
        ========================= */
 
-    /**
-     * 구매 확정
-     */
+    /** 구매 확정: AVAILABLE 상태에서만 가능 */
     public void purchase() {
+        if (this.status != FreezeStatus.AVAILABLE) {
+            throw new IllegalStateException("구매 확정은 AVAILABLE 상태에서만 가능합니다.");
+        }
         this.status = FreezeStatus.PURCHASED;
     }
 
-    /**
-     * 구매 취소
-     */
+    /** 구매 취소: PURCHASED면 취소 불가 (정책이 다르면 바꿔도 됨) */
     public void cancel() {
+        if (this.status == FreezeStatus.PURCHASED) {
+            throw new IllegalStateException("이미 구매된 항목은 취소할 수 없습니다.");
+        }
         this.status = FreezeStatus.CANCELLED;
     }
 
-    /**
-     * 냉동 해제 가능 상태로 변경
-     */
+    /** 냉동 해제 가능: FROZEN 상태에서만 가능 */
     public void makeAvailable() {
+        if (this.status != FreezeStatus.FROZEN) {
+            throw new IllegalStateException("FROZEN 상태에서만 AVAILABLE로 변경할 수 있습니다.");
+        }
         this.status = FreezeStatus.AVAILABLE;
+    }
+
+    /** 마감시간이 지났는지 */
+    public boolean isDeadlinePassed(LocalDateTime now) {
+        return this.deadline != null && this.deadline.isBefore(now);
     }
 }
