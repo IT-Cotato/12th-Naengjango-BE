@@ -126,4 +126,15 @@ public class FreezeItem extends BaseEntity {
     public boolean isDeadlinePassed(LocalDateTime now) {
         return this.deadline != null && this.deadline.isBefore(now);
     }
+
+    /** 정보 수정 */
+    public void update(String appName, String itemName, Integer price) {
+        if (appName != null) this.appName = appName;
+        if (itemName != null) this.itemName = itemName;
+        if (price != null) this.price = price;
+    }
+
+    public void extendDeadline(int hours) {
+        this.deadline = this.deadline.plusHours(hours);
+    }
 }

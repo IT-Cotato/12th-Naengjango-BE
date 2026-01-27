@@ -1,6 +1,13 @@
 package com.itcotato.naengjango.domain.freeze.service.command;
 
+import com.itcotato.naengjango.domain.freeze.dto.FreezeRequestDto;
+import com.itcotato.naengjango.domain.freeze.dto.FreezeResponseDto;
+import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
+import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
+import com.itcotato.naengjango.domain.freeze.exception.FreezeException;
+import com.itcotato.naengjango.domain.freeze.exception.code.FreezeErrorCode;
 import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +20,12 @@ public class FreezeCommandService {
     private final FreezeItemRepository freezeItemRepository;
     private final CurrentMemberProvider currentMemberProvider;
 
-    public FreezeCreateResponse createFreezeItem(FreezeCreateRequest request) {
+    /**
+     * 냉동 등록
+     */
+    public FreezeResponseDto.CreateResponse create(
+            FreezeRequestDto.CreateRequest request
+    ) {
         Member me = currentMemberProvider.getCurrentMember();
 
         FreezeItem item = FreezeItem.create(
@@ -21,71 +33,72 @@ public class FreezeCommandService {
                 request.appName(),
                 request.itemName(),
                 request.price(),
-                request.deadline()
+                null
         );
 
         FreezeItem saved = freezeItemRepository.save(item);
-        return new FreezeCreateResponse(saved.getId());
+
+        return new FreezeResponseDto.CreateResponse(
+                saved.getId(),
+                saved.getItemName(),
+                saved.getPrice(),
+                saved.getStatus(),
+                saved.getFrozenAt(),
+                saved.getDeadline()
+        );
     }
 
-    public FreezeStatusResponse makeAvailable(Long freezeItemId) {
-        Member me = currentMemberProvider.getCurrentMember();
-        FreezeItem item = findAndValidate(me, freezeItemId);
+    /**
+     * 구매 확정
+     */
+    public void purchase(Long freezeId) {
+        FreezeItem item = findOwnedFreeze(freezeId);
+        item.purchase();
+    }
 
-        try {
-            item.makeAvailable();
-        } catch (IllegalStateException e) {
+    /**
+     * 구매 취소
+     */
+    public void cancel(Long freezeId) {
+        FreezeItem item = findOwnedFreeze(freezeId);
+        item.cancel();
+    }
+
+    /**
+     * 삭제
+     */
+    public void delete(Long freezeId) {
+        FreezeItem item = findOwnedFreeze(freezeId);
+        freezeItemRepository.delete(item);
+    }
+
+    /**
+     * 수정 (FROZEN 상태만 가능)
+     */
+    public FreezeResponseDto.DetailResponse update(
+            Long freezeId,
+            FreezeRequestDto.UpdateRequest request
+    ) {
+        FreezeItem item = findOwnedFreeze(freezeId);
+
+        if (item.getStatus() != FreezeStatus.FROZEN) {
             throw new FreezeException(FreezeErrorCode.INVALID_STATUS_TRANSITION);
         }
 
-        return new FreezeStatusResponse(item.getId(), item.getStatus());
-    }
+        item.update(
+                request.appName(),
+                request.itemName(),
+                request.price()
+        );
 
-    public FreezeStatusResponse purchase(Long freezeItemId) {
-        Member me = currentMemberProvider.getCurrentMember();
-        FreezeItem item = findAndValidate(me, freezeItemId);
-
-        if (item.getStatus() == FreezeStatus.PURCHASED) {
-            throw new FreezeException(FreezeErrorCode.ALREADY_PURCHASED);
-        }
-        if (item.getStatus() == FreezeStatus.CANCELLED) {
-            throw new FreezeException(FreezeErrorCode.ALREADY_CANCELLED);
-        }
-
-        try {
-            item.purchase();
-        } catch (IllegalStateException e) {
-            throw new FreezeException(FreezeErrorCode.INVALID_STATUS_TRANSITION);
-        }
-
-        return new FreezeStatusResponse(item.getId(), item.getStatus());
-    }
-
-    public FreezeStatusResponse cancel(Long freezeItemId) {
-        Member me = currentMemberProvider.getCurrentMember();
-        FreezeItem item = findAndValidate(me, freezeItemId);
-
-        if (item.getStatus() == FreezeStatus.CANCELLED) {
-            throw new FreezeException(FreezeErrorCode.ALREADY_CANCELLED);
-        }
-
-        try {
-            item.cancel();
-        } catch (IllegalStateException e) {
-            throw new FreezeException(FreezeErrorCode.INVALID_STATUS_TRANSITION);
-        }
-
-        return new FreezeStatusResponse(item.getId(), item.getStatus());
-    }
-
-    private FreezeItem findAndValidate(Member me, Long freezeItemId) {
-        FreezeItem item = freezeItemRepository.findById(freezeItemId)
-                .orElseThrow(() -> new FreezeException(FreezeErrorCode.FREEZE_ITEM_NOT_FOUND));
-
-        if (!item.getMember().getId().equals(me.getId())) {
-            throw new FreezeException(FreezeErrorCode.FREEZE_FORBIDDEN);
-        }
-
-        return item;
+        return new FreezeResponseDto.DetailResponse(
+                item.getId(),
+                item.getAppName(),
+                item.getItemName(),
+                item.getPrice(),
+                item.getStatus(),
+                item.getFrozenAt(),
+                item.getDeadline()
+        );
     }
 }
