@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.freeze.dto;
 
+import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -42,7 +43,19 @@ public class FreezeResponseDto {
             FreezeStatus status,
             LocalDateTime frozenAt,
             LocalDateTime deadline
-    ) {}
+    ) {
+        public static DetailResponse from(FreezeItem item) {
+            return new DetailResponse(
+                    item.getId(),
+                    item.getAppName(),
+                    item.getItemName(),
+                    item.getPrice(),
+                    item.getStatus(),
+                    item.getFrozenAt(),
+                    item.getDeadline()
+            );
+        }
+    }
 
     /**
      * 일괄 처리 결과 응답

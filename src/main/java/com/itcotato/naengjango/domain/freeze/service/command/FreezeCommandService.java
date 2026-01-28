@@ -8,6 +8,7 @@ import com.itcotato.naengjango.domain.freeze.exception.FreezeException;
 import com.itcotato.naengjango.domain.freeze.exception.code.FreezeErrorCode;
 import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
 import com.itcotato.naengjango.domain.member.entity.Member;
+import com.itcotato.naengjango.global.security.CurrentMemberProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,14 +92,25 @@ public class FreezeCommandService {
                 request.price()
         );
 
-        return new FreezeResponseDto.DetailResponse(
-                item.getId(),
-                item.getAppName(),
-                item.getItemName(),
-                item.getPrice(),
-                item.getStatus(),
-                item.getFrozenAt(),
-                item.getDeadline()
-        );
+        return FreezeResponseDto.DetailResponse.from(item);
+    }
+
+    /**
+     * 🔑 공통: 내 소유 냉동 항목 조회
+     */
+    private FreezeItem findOwnedFreeze(Long freezeId) {
+        Member member = currentMemberProvider.getCurrentMember();
+
+        FreezeItem item = freezeItemRepository
+                .findById(freezeId)
+                .orElseThrow(() ->
+                        new FreezeException(FreezeErrorCode.FREEZE_ITEM_NOT_FOUND)
+                );
+
+        if (!item.getMember().getId().equals(member.getId())) {
+            throw new FreezeException(FreezeErrorCode.FREEZE_FORBIDDEN);
+        }
+
+        return item;
     }
 }

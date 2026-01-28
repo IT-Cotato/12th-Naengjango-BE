@@ -6,6 +6,7 @@ import com.itcotato.naengjango.domain.freeze.exception.FreezeException;
 import com.itcotato.naengjango.domain.freeze.exception.code.FreezeErrorCode;
 import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
 import com.itcotato.naengjango.domain.member.entity.Member;
+import com.itcotato.naengjango.global.security.CurrentMemberProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

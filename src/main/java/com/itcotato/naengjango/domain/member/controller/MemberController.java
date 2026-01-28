@@ -5,10 +5,12 @@ import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
 import com.itcotato.naengjango.domain.member.exception.code.MemberSuccessCode;
 import com.itcotato.naengjango.domain.member.service.MemberService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
+import com.itcotato.naengjango.global.security.userdetails.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "사용자 회원가입", description = "사용자 회원가입 관련 API")
@@ -20,10 +22,10 @@ public class MemberController {
 
     @Operation(summary = "ID 중복 확인 by 주성아 (개발 완료)",
             description = """
-                회원가입 시 ID 중복 확인하는 API입니다.
-                - `loginId`: 중복 여부를 확인할 아이디
-                - 중복된 아이디가 존재하면 에러를 반환합니다.
-                """
+                    회원가입 시 ID 중복 확인하는 API입니다.
+                    - `loginId`: 중복 여부를 확인할 아이디
+                    - 중복된 아이디가 존재하면 에러를 반환합니다.
+                    """
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -52,10 +54,10 @@ public class MemberController {
 
     @Operation(summary = "최종 회원가입 API by 주성아 (개발 완료)",
             description = """
-                회원가입 시 유저 정보를 저장하는 API입니다.
-                - 이름, 전화번호, 아이디, 비밀번호, 동의한 약관 ID 리스트, 한 달 예산, 고정지출 리스트 저장합니다.
-                - 인증 유효시간인 15분이 만료되면 에러를 반환합니다.
-                """
+                    회원가입 시 유저 정보를 저장하는 API입니다.
+                    - 이름, 전화번호, 아이디, 비밀번호, 동의한 약관 ID 리스트, 한 달 예산, 고정지출 리스트 저장합니다.
+                    - 인증 유효시간인 15분이 만료되면 에러를 반환합니다.
+                    """
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
