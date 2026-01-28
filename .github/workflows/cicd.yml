@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./12th-Naengjango-BE
+        working-directory: 12th-Naengjango-BE
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./12th-Naengjango-BE
+          context: 12th-Naengjango-BE
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/naengjango-app:latest
 
