@@ -7,10 +7,14 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./12th-Naengjango-BE
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 25
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -28,7 +32,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./12th-Naengjango-BE
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/naengjango-app:latest
 
