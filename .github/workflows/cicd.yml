@@ -22,7 +22,6 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          cd 12th-Naengjango-BE
           chmod +x gradlew
           ./gradlew clean build -x test
 
@@ -35,7 +34,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./12th-Naengjango-BE
+          context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/naengjango-app:latest
 
