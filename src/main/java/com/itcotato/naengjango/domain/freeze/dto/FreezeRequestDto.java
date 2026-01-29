@@ -10,61 +10,28 @@ import java.util.List;
 public class FreezeRequestDto {
 
     /**
-     * 냉동 등록 요청
+     * 냉동 생성 (수동 등록)
      */
-    public record CreateRequest(
-            @Schema(
-                    description = "구매 예정 앱 이름",
-                    example = "쿠팡"
-            )
-            @NotBlank String appName,
-
-            @Schema(
-                    description = "상품 이름",
-                    example = "에어팟 프로 2세대"
-            )
-            @NotBlank String itemName,
-
-            @Schema(
-                    description = "상품 가격 (원)",
-                    example = "329000"
-            )
-            @Positive int price
-    ) {}
-
-    /**
-     * 냉동 일괄 처리 요청
-     */
-    public record BatchRequest(
-
-            @Schema(
-                    description = "처리할 냉동 항목 ID 목록",
-                    example = "[1, 2, 3]"
-            )
-            List<Long> freezeItemIds
-    ) {}
-
-    /**
-     * 냉동 수정 요청
-     */
-    public record UpdateRequest(
-
-            @Schema(
-                    description = "구매 예정 앱 이름",
-                    example = "무신사"
-            )
+    public record Create(
             String appName,
-
-            @Schema(
-                    description = "상품 이름",
-                    example = "후드티"
-            )
             String itemName,
+            int price
+    ) {}
 
-            @Schema(
-                    description = "상품 가격 (원)",
-                    example = "189000"
-            )
-            Integer price
+    /**
+     * 냉동 수정
+     */
+    public record Update(
+            String appName,
+            String itemName,
+            int price
+    ) {}
+
+    /**
+     * 다중 선택용 ID 리스트
+     * - 성공 / 실패 / 연장 / 예산 계산
+     */
+    public record Ids(
+            List<Long> freezeIds
     ) {}
 }

@@ -4,14 +4,21 @@ import com.itcotato.naengjango.domain.auth.dto.*;
 import com.itcotato.naengjango.domain.auth.exception.code.AuthSuccessCode;
 import com.itcotato.naengjango.domain.auth.service.AuthService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
+import com.itcotato.naengjango.global.redis.RefreshTokenRedisRepository;
+import com.itcotato.naengjango.global.security.jwt.JwtClaims;
+import com.itcotato.naengjango.global.security.jwt.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/auth")
@@ -20,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtProvider jwtProvider;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     /**
      * 기본 로그인 (아이디 + 비밀번호)
@@ -31,120 +40,12 @@ public class AuthController {
                             - 요청 바디에 username과 password를 포함하여 전송합니다.
                             - 성공 시 access token과 refresh token을 반환합니다.
                     """)
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN200_1",
-                    description = "로그인 성공",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN400_1",
-                    description = "잘못된 요청 (로그인 타입 오류)"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "MEMBER404_1",
-                    description = "회원 정보 없음"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN401_1",
-                    description = "비밀번호 불일치"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN401_2",
-                    description = "리프레시 토큰 오류"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN500_1",
-                    description = "서버 내부 오류"
-            )
-    })
     @PostMapping("/login")
-    public ApiResponse<LoginResponseDto> loginLocal(
-            @RequestBody @Valid LocalLoginRequestDto request
+    public ApiResponse<AuthResponseDto.TokenResponse> localLogin(
+            @RequestBody @Valid AuthRequestDto.LoginRequest request
     ) {
-        LoginResponseDto response = authService.loginLocal(request);
+        AuthResponseDto.TokenResponse response = authService.localLogin(request);
         return ApiResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, response);
-    }
-
-    /**
-     * 소셜 로그인
-     */
-    @Operation(
-            summary = "소셜 로그인 by 임준서 (개발 완료)",
-            description = """
-                            소셜 로그인 API 입니다.
-                            - 소셜 타입(GOOGLE)에 따라 경로를 지정합니다.
-                            - 요청 바디에 소셜 액세스 토큰을 포함하여 전송합니다.
-                            - 기존 연동 계정일 경우 access token과 refresh token을 반환합니다.
-                            - 최초 연동 계정일 경우 추가 회원가입 정보가 필요함을 알리는 응답을 반환합니다.
-                    """)
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN200_1",
-                    description = "로그인 성공",
-                    content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN400_1",
-                    description = "잘못된 요청 (로그인 타입 오류)"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "MEMBER404_1",
-                    description = "회원 정보 없음"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN401_1",
-                    description = "비밀번호 불일치"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN401_2",
-                    description = "리프레시 토큰 오류"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGIN500_1",
-                    description = "서버 내부 오류"
-            )
-    })
-    @PostMapping("/login/{socialType}")
-    public ApiResponse<?> loginSocial(
-            @PathVariable String socialType,
-            @RequestBody @Valid SocialLoginRequestDto request
-    ) {
-        Object result = authService.loginSocial(socialType, request);
-        return ApiResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, result);
-    }
-
-    /**
-     * 로그아웃
-     */
-    @Operation(
-            summary = "로그아웃 by 임준서 (개발 완료)",
-            description = """
-                            사용자 로그아웃 API 입니다.
-                            - Authorization Header에 access token(JWT)을 포함해야 합니다.
-                            - 성공 시 서버에서 토큰을 무효화 처리합니다.
-                    """
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGOUT200_1",
-                    description = "로그아웃 성공"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGOUT401_1",
-                    description = "인증되지 않은 사용자 (토큰 없음 또는 만료)"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "LOGOUT500_1",
-                    description = "서버 내부 오류"
-            )
-    })
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(
-            @RequestBody @Valid LogoutRequestDto request
-    ) {
-        authService.logout(request);
-        return ApiResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS, null);
     }
 
     /**
@@ -153,30 +54,91 @@ public class AuthController {
     @Operation(
             summary = "토큰 재발급 by 임준서 (개발 완료)",
             description = """
-                            Access Token 재발급 API 입니다.
-                            - 요청 바디에 유효한 Refresh Token을 포함하여 전송합니다.
-                            - 성공 시 새로운 Access Token을 반환합니다.
+                            토큰 재발급 API 입니다.
+                            - 요청 헤더에 refresh token을 포함하여 전송합니다.
+                            - 성공 시 새로운 access token과 refresh token을 반환합니다.
                     """)
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "TOKEN200_1",
-                    description = "토큰 재발급 성공",
-                    content = @Content(schema = @Schema(implementation = TokenReissueResponseDto.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "TOKEN401_1",
-                    description = "유효하지 않은 리프레시 토큰"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "TOKEN500_1",
-                    description = "서버 내부 오류"
-            )
-    })
-    @PostMapping("/token/refresh")
-    public ApiResponse<TokenReissueResponseDto> reissueToken(
-            @RequestBody @Valid TokenReissueRequestDto request
+    @PostMapping("/refresh")
+    public ApiResponse<AuthResponseDto.TokenResponse> refresh(
+            @RequestHeader("Authorization") String authorization
     ) {
-        TokenReissueResponseDto response = authService.reissueAccessToken(request);
-        return ApiResponse.onSuccess(AuthSuccessCode.TOKEN_REISSUE_SUCCESS, response);
+        // 1. Bearer 토큰 파싱
+        String refreshToken = authorization.replace("Bearer ", "");
+
+        // 2. refreshToken 검증 + claims 추출
+        JwtClaims claims = jwtProvider.validateAndExtractClaims(refreshToken);
+        Long memberId = claims.memberId();
+
+        // 3. Redis에 저장된 토큰과 비교
+        String savedToken =
+                refreshTokenRedisRepository.findByMemberId(memberId)
+                        .orElseThrow(() -> new IllegalArgumentException("로그아웃된 토큰"));
+
+        if (!savedToken.equals(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 refresh token");
+        }
+
+        // 4. 토큰 재발급 (공통 로직)
+        AuthResponseDto.TokenResponse tokenResponse =
+                authService.refresh(memberId);
+
+        return ApiResponse.onSuccess(
+                AuthSuccessCode.TOKEN_REISSUE_SUCCESS,
+                tokenResponse
+        );
+    }
+
+    /**
+     * 로그아웃
+     */
+    @Operation(
+            summary = "로그아웃 by 임준서 (개발 완료)",
+            description = """
+                            로그아웃 API 입니다.
+                            - 요청 헤더에 access token을 포함하여 전송합니다.
+                            - 성공 시 로그아웃 완료 메시지를 반환합니다.
+                    """)
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        authService.logout(memberId);
+        return ApiResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS,null);
+    }
+
+    @Operation(summary = """
+         구글 로그인 리다이렉트 by 임준서 (개발 완료)""",
+            description = """
+                    구글 로그인은 아래 엔드포인트로 요청을 보내면 구글 OAuth2 인증 페이지로 리다이렉트됩니다.
+                    - 사용자가 구글 계정으로 인증을 완료하면, 설정된 리다이렉트 URI로 다시 리다이렉트됩니다.
+                    - 이후 백엔드에서 OAuth2 인증 정보를 처리하여 로그인 또는 회원가입을 진행합니다.
+                    """)
+    @GetMapping("/login/google")
+    public void googleLogin(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/oauth2/authorization/google");
+    }
+
+    @PostMapping("/find-loginId")
+    public ApiResponse<AuthResponseDto.FindLoginIdResponse> findLoginId(
+            @RequestBody AuthRequestDto.FindLoginIdRequest request
+    ) {
+        String masked = authService.findLoginId(
+                request.name(),
+                request.phoneNumber()
+        );
+        AuthResponseDto.FindLoginIdResponse response = new AuthResponseDto.FindLoginIdResponse(masked);
+        return ApiResponse.onSuccess(AuthSuccessCode.FIND_LOGINID_SUCCESS, response);
+    }
+
+    @PostMapping("/find-password")
+    public ApiResponse<Void> findPassword(
+            @RequestBody AuthRequestDto.FindPasswordRequest request
+    ) {
+        authService.resetPassword(
+                request.name(),
+                request.loginId(),
+                request.phoneNumber()
+        );
+        return ApiResponse.onSuccess(AuthSuccessCode.FIND_PASSWORD_SUCCESS, null);
     }
 }

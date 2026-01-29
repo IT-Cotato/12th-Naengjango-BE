@@ -16,12 +16,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     LOGIN_INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
             "LOGIN500_1",
             "예기치 않은 서버 에러가 발생했습니다."),
-    INVALID_LOGIN_TYPE(HttpStatus.BAD_REQUEST,
+    LOGIN_INVALID_TYPE(HttpStatus.BAD_REQUEST,
             "LOGIN400_1",
             "유효하지 않은 로그인 타입입니다."),
-    LOGIN_UNSUPPORTED_SOCIAL_TYPE(HttpStatus.BAD_REQUEST,
-            "LOGIN400_2",
-            "지원하지 않는 소셜 로그인 타입입니다."),
     LOGIN_INVALID_PASSWORD(HttpStatus.UNAUTHORIZED,
             "LOGIN401_1",
             "비밀번호가 일치하지 않습니다."),
@@ -56,7 +53,6 @@ public enum AuthErrorCode implements BaseErrorCode {
             "TOKEN500_1",
             "예기치 않은 서버 에러가 발생했습니다.")
     ;
-
 
 
     private final HttpStatus status;

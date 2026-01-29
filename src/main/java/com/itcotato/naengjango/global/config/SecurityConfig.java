@@ -1,6 +1,7 @@
 package com.itcotato.naengjango.global.config;
 
 import com.itcotato.naengjango.global.security.jwt.JwtAuthenticationFilter;
+import com.itcotato.naengjango.global.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -28,7 +34,10 @@ public class SecurityConfig {
 
     /** 보안 필터 체인 설정 */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            OAuth2SuccessHandler oAuth2SuccessHandler
+    ) throws Exception {
 
         http
                 // 기본 설정 비활성화
@@ -40,22 +49,30 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // CORS 설정
-                .cors(cors -> cors.configure(http))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // 요청별 접근 제어
                 .authorizeHttpRequests(auth -> auth
                 // 인증 없이 허용
                         .requestMatchers(
                                 "/auth/**",
+                                "/oauth2/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/swagger-resources/**",
+                                "/v3/api-docs/**",
+                                "/error",
+                                "/actuator/**",
+                                "/api/sms/**",
+                                "/api/members/**"
                         ).permitAll()
-                        // 로그인 없이 허용 가능한 경로
-                        .requestMatchers("/api/sms/**", "/swagger-ui/**", "/v3/api-docs/**",
-                                "/swagger-resources/**", "/error", "/api/members/**").permitAll()
 
                 // 그 외 요청은 인증 필요
                         .anyRequest().authenticated()
+                )
+
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth ->
+                        oauth.successHandler(oAuth2SuccessHandler)
                 )
 
                 // JWT 인증 필터 적용
@@ -65,5 +82,21 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    /** CORS 설정 */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(List.of("http://localhost:3000")); // 프론트 주소
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("*"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

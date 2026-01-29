@@ -1,153 +1,151 @@
 package com.itcotato.naengjango.domain.auth.service;
 
-import com.itcotato.naengjango.domain.auth.dto.*;
+import com.itcotato.naengjango.domain.auth.dto.AuthRequestDto;
+import com.itcotato.naengjango.domain.auth.dto.AuthResponseDto;
 import com.itcotato.naengjango.domain.auth.exception.AuthException;
 import com.itcotato.naengjango.domain.auth.exception.code.AuthErrorCode;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.enums.SocialType;
-import com.itcotato.naengjango.global.security.jwt.JwtProvider;
+import com.itcotato.naengjango.domain.member.exception.MemberException;
+import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
+import com.itcotato.naengjango.domain.member.repository.MemberRepository;
+import com.itcotato.naengjango.domain.member.service.SmsService;
 import com.itcotato.naengjango.global.redis.RefreshTokenRedisRepository;
+import com.itcotato.naengjango.global.security.jwt.JwtClaims;
+import com.itcotato.naengjango.global.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final LocalLoginService localLoginService;
-    private final SocialLoginService socialLoginService;
+    private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final SmsService smsService;
 
-    /**
-     * 기본 로그인 (아이디 + 비밀번호)
-     */
+
+    /** 토큰 발급 공통 메서드 */
     @Transactional
-    public LoginResponseDto loginLocal(LocalLoginRequestDto request) {
+    public AuthResponseDto.TokenResponse issueToken(Member member) {
 
-        // 1. 아이디/비밀번호 검증 → Member 반환
-        Member member = localLoginService.login(
-                request.getLoginId(),
-                request.getPassword()
-        );
+        // 1. 가입 완료 여부 판단
+        boolean signupCompleted =
+                member.getPhoneNumber() != null
+                        && !member.getMemberAgreements().isEmpty();
 
-        // 2. JWT 발급
-        return issueTokens(member);
-    }
-
-    /**
-     * 소셜 로그인
-     * - 기존 연동 계정: JWT 발급
-     * - 최초 연동 계정: 추가 정보 필요 응답
-     */
-    @Transactional
-    public Object loginSocial(
-            String socialType,
-            SocialLoginRequestDto request
-    ) {
-        // 1. 소셜 타입 파싱
-        SocialType type = parseSocialType(socialType);
-
-        // 2. 소셜 로그인 시도
-        SocialLoginResult result =
-                socialLoginService.login(type, request.getSocialToken());
-
-        // 3. 기존 연동 계정 → 로그인 완료
-        if (result.isLinked()) {
-            return issueTokens(result.getMember());
-        }
-
-        // 4. 최초 연동 계정 → 회원가입 필요
-        return new SocialSignupRequiredResponseDto(
-                true,
-                type.name(),
-                result.getSocialId()
-        );
-    }
-
-    /**
-     * Access Token 재발급
-     */
-    public TokenReissueResponseDto reissueAccessToken(
-            TokenReissueRequestDto request
-    ) {
-        String refreshToken = request.getRefreshToken();
-
-        // 1. refresh token 자체 검증
-        if (!jwtProvider.validateToken(refreshToken)) {
-            throw new AuthException(AuthErrorCode.REISSUE_INVALID_REFRESH_TOKEN);
-        }
-
-        // 2. Redis에서 memberId 조회
-        Long memberId =
-                refreshTokenRedisRepository.findMemberIdByToken(refreshToken);
-
-        if (memberId == null) {
-            throw new AuthException(AuthErrorCode.REISSUE_INVALID_REFRESH_TOKEN);
-        }
-
-        // 3. Access Token 재발급
-        String newAccessToken =
-                jwtProvider.createAccessToken(memberId);
-
-        return new TokenReissueResponseDto(newAccessToken);
-    }
-
-
-    /**
-     * Access / Refresh Token 발급 공통 메서드
-     */
-    private LoginResponseDto issueTokens(Member member) {
-
-        String accessToken =
-                jwtProvider.createAccessToken(member.getId());
-
-        String refreshToken =
-                jwtProvider.createRefreshToken(member.getId());
-
-        refreshTokenRedisRepository.save(
-                refreshToken,
+        // 2. Claims 생성
+        JwtClaims claims = new JwtClaims(
                 member.getId(),
-                jwtProvider.getRefreshTokenExpirationMs()
+                member.getRole().name(),
+                signupCompleted
         );
 
-        return new LoginResponseDto(accessToken, refreshToken);
+        // 3. 토큰 발급
+        String accessToken = jwtProvider.createAccessToken(claims);
+        String refreshToken = jwtProvider.createRefreshToken(claims);
+
+        // 4. RefreshToken Redis 저장
+        refreshTokenRedisRepository.save(
+                member.getId(),
+                refreshToken,
+                Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
+        );
+
+        // 5. 공통 응답 DTO
+        return new AuthResponseDto.TokenResponse(
+                accessToken,
+                refreshToken,
+                signupCompleted
+        );
     }
 
-    /**
-     * 소셜 타입 문자열 파싱
-     */
-    private SocialType parseSocialType(String socialType) {
-        try {
-            return SocialType.valueOf(socialType.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new AuthException(AuthErrorCode.LOGIN_UNSUPPORTED_SOCIAL_TYPE);
+    /** 기본 로그인 (아이디 + 비밀번호) */
+    @Transactional(readOnly = true)
+    public AuthResponseDto.TokenResponse localLogin(
+            AuthRequestDto.LoginRequest request
+    ) {
+        Member member = memberRepository.findByLoginId(request.loginId())
+                .orElseThrow(() -> new AuthException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getSocialType() != SocialType.LOCAL) {
+            throw new AuthException(AuthErrorCode.LOGIN_INVALID_TYPE);
         }
+
+        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            throw new AuthException(AuthErrorCode.LOGIN_INVALID_PASSWORD);
+        }
+
+        return issueToken(member);
     }
 
-    /**
-     * 로그아웃
-     */
+    /** 토큰 재발급 (Access Token 재발급) */
+    public AuthResponseDto.TokenResponse refresh(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new AuthException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        return issueToken(member);
+    }
+
+    /** 로그아웃 */
     @Transactional
-    public void logout(LogoutRequestDto request) {
+    public void logout(Long memberId) {
+        refreshTokenRedisRepository.delete(memberId);
+    }
 
-        String refreshToken = request.getRefreshToken();
+    public String findLoginId(String name, String phoneNumber) {
+        Member member = memberRepository
+                .findByNameAndPhoneNumber(name, phoneNumber)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 1. JWT 형식 검증
-        if (!jwtProvider.validateToken(refreshToken)) {
-            throw new AuthException(AuthErrorCode.LOGOUT_INVALID_REFRESH_TOKEN);
+        return maskLoginId(member.getLoginId());
+    }
+
+    /**
+     * 아이디 마스킹 (뒤 2~6자리 * 처리)
+     */
+    private String maskLoginId(String loginId) {
+        int length = loginId.length();
+        int maskStart = Math.max(1, length - 6);
+        int maskEnd = length - 2;
+
+        StringBuilder sb = new StringBuilder(loginId);
+        for (int i = maskStart; i < maskEnd; i++) {
+            sb.setCharAt(i, '*');
         }
+        return sb.toString();
+    }
 
-        // 2. Redis에 존재하는지 확인
-        Long memberId =
-                refreshTokenRedisRepository.findMemberIdByToken(refreshToken);
+    /**
+     * 임시 비밀번호 생성
+     */
+    private String generateTempPassword() {
+        return UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 8);
+    }
 
-        if (memberId == null) {
-            throw new AuthException(AuthErrorCode.LOGOUT_INVALID_REFRESH_TOKEN);
-        }
+    @Transactional
+    public void resetPassword(String name, String loginId, String phoneNumber) {
+        Member member = memberRepository
+                .findByNameAndLoginIdAndPhoneNumber(name, loginId, phoneNumber)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 3. Refresh Token 삭제
-        refreshTokenRedisRepository.delete(refreshToken);
+        // 1. 임시 비밀번호 생성
+        String tempPassword = generateTempPassword();
+
+        // 2. 비밀번호 암호화 후 변경
+        member.changePassword(passwordEncoder.encode(tempPassword));
+
+        // 3. SMS 발송
+        smsService.sendTempPassword(phoneNumber, tempPassword);
     }
 }

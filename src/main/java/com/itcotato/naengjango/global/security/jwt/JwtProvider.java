@@ -3,13 +3,12 @@ package com.itcotato.naengjango.global.security.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -18,83 +17,92 @@ import java.util.Date;
 @Component
 public class JwtProvider {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private static final String CLAIM_MEMBER_ID = "memberId";
+    private static final String CLAIM_ROLE = "role";
+    private static final String CLAIM_SIGNUP_COMPLETED = "signupCompleted";
 
-    @Value("${jwt.access-token-expiration-ms}")
-    private long accessTokenExpirationMs;
+    private final JwtProperties properties;
+    private final SecretKey secretKey;
 
-    @Value("${jwt.refresh-token-expiration-ms}")
-    private long refreshTokenExpirationMs;
-
-    private SecretKey secretKey;
-
-    /**
-     * SecretKey 초기화
-     */
-    @PostConstruct
-    private void init() {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    public JwtProvider(JwtProperties properties) {
+        this.properties = properties;
+        this.secretKey = Keys.hmacShaKeyFor(
+                properties.secret().getBytes(StandardCharsets.UTF_8)
+        );
     }
 
-    /**
-     * Access Token 생성
-     */
-    public String createAccessToken(Long memberId) {
-        return createToken(memberId, accessTokenExpirationMs);
+    /* =========================
+       토큰 생성
+       ========================= */
+
+    public String createAccessToken(JwtClaims claims) {
+        return createToken(claims, properties.accessExpSeconds());
     }
 
-    /**
-     * Refresh Token 생성
-     */
-    public String createRefreshToken(Long memberId) {
-        return createToken(memberId, refreshTokenExpirationMs);
+    public String createRefreshToken(JwtClaims claims) {
+        return createToken(claims, properties.refreshExpSeconds());
     }
 
-    private String createToken(Long memberId, long expirationMs) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationMs);
+    private String createToken(JwtClaims claims, long expireSeconds) {
+        Instant now = Instant.now();
+        Instant expiry = now.plusSeconds(expireSeconds);
 
         return Jwts.builder()
-                .setSubject(String.valueOf(memberId))
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .claim(CLAIM_MEMBER_ID, claims.memberId())
+                .claim(CLAIM_ROLE, claims.role())
+                .claim(CLAIM_SIGNUP_COMPLETED, claims.signupCompleted())
+                .signWith(secretKey)
                 .compact();
     }
 
-    /**
-     * JWT 유효성 검증
-     */
-    public boolean validateToken(String token) {
-        try {
-            parseClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
+    /* =========================
+       토큰 검증 + Claims 추출
+       ========================= */
+
+    public JwtClaims extractClaims(String token) {
+        Claims claims = parse(token);
+
+        Long memberId = claims.get(CLAIM_MEMBER_ID, Long.class);
+        String role = claims.get(CLAIM_ROLE, String.class);
+        Boolean signupCompleted = claims.get(CLAIM_SIGNUP_COMPLETED, Boolean.class);
+
+        if (memberId == null || role == null || signupCompleted == null) {
+            throw new JwtException("Invalid JWT claims");
         }
+
+        return new JwtClaims(
+                memberId,
+                role,
+                signupCompleted
+        );
     }
 
-    /**
-     * JWT에서 memberId 추출
-     */
-    public Long getMemberId(String token) {
-        Claims claims = parseClaims(token);
-        return Long.valueOf(claims.getSubject());
-    }
-
-    private Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+    private Claims parse(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
-    /**
-     * 리프레시 토큰 만료 시간 반환
-     */
-    public long getRefreshTokenExpirationMs() {
-        return refreshTokenExpirationMs;
+    public long getRefreshTokenExpireSeconds() {
+        return properties.refreshExpSeconds();
+    }
+
+    public JwtClaims validateAndExtractClaims(String token) {
+
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return new JwtClaims(
+                Long.valueOf(claims.getSubject()),
+                claims.get("role", String.class),
+                claims.get("signupCompleted", Boolean.class)
+        );
     }
 }

@@ -9,70 +9,51 @@ import java.util.List;
 public class FreezeResponseDto {
 
     /**
-     * 냉동 등록 응답
+     * 냉동 생성 응답
      */
-    public record CreateResponse(
-            Long freezeItemId,
-            String itemName,
-            int price,
-            FreezeStatus status,
-            LocalDateTime frozenAt,
-            LocalDateTime deadline
+    public record Create(
+            Long freezeId,
+            LocalDateTime expiresAt
     ) {}
 
     /**
-     * 냉동 목록 응답
+     * 냉동 중 항목 조회 응답
      */
-    public record ListResponse(
-            Long freezeItemId,
-            String itemName,
-            int price,
-            FreezeStatus status,
-            LocalDateTime deadline
-    ) {}
-
-    /**
-     * 냉동 상세 응답
-     */
-    public record DetailResponse(
-            Long freezeItemId,
+    public record Item(
+            Long id,
             String appName,
             String itemName,
             int price,
-            FreezeStatus status,
             LocalDateTime frozenAt,
-            LocalDateTime deadline
+            LocalDateTime expiresAt,
+            long remainingSeconds
     ) {}
 
     /**
-     * 일괄 처리 결과 응답
+     * 다중 액션 결과 응답
+     * - 성공 / 실패 / 연장
      */
-    public record BatchResultResponse(
+    public record BulkAction(
+            int affectedCount,
+            int snowballsGranted,
+            boolean streakBonusTriggered
+    ) {}
 
-            @Schema(example = "3")
-            int processedCount,
+    /**
+     * 예산 미리보기 응답
+     */
+    public record BudgetPreview(
+            int selectedTotalPrice,
+            int remainingDaysInMonth,
+            int perDayBudget
+    ) {}
 
-            @Schema(
-                    description = "처리된 냉동 항목 ID 목록",
-                    example = "[1, 2, 3]"
-            )
-            List<Long> processedIds,
-
-            @Schema(
-                    description = "처리 결과 메시지",
-                    example = "냉동 성공 처리 완료"
-            )
-            String message
-    ) {
-        public static BatchResultResponse from(
-                List<Long> ids,
-                String message
-        ) {
-            return new BatchResultResponse(
-                    ids.size(),
-                    ids,
-                    message
-            );
-        }
-    }
+    /**
+     * 링크 파싱 성공 응답
+     */
+    public record LinkParse(
+            String appName,
+            String itemName,
+            int price
+    ) {}
 }

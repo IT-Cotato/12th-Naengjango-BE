@@ -1,10 +1,11 @@
 package com.itcotato.naengjango.global.redis;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.util.Optional;
 
 /**
  * 리프레시 토큰 Redis 레포지토리
@@ -13,50 +14,33 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RefreshTokenRedisRepository {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private static final String KEY_PREFIX = "Refresh:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    /** 리프레시 토큰 저장 */
+    public void save(Long memberId, String refreshToken, Duration ttl) {
+        redisTemplate.opsForValue()
+                .set(key(memberId), refreshToken, ttl);
+    }
 
     /**
-     * 리프레시 토큰 저장
-     *
-     * @param refreshToken     리프레시 토큰
-     * @param memberId         회원 ID
-     * @param expirationMillis 만료 시간 (밀리초)
+     * 리프레시 토큰 조회
      */
-    public void save(
-            String refreshToken,
-            Long memberId,
-            long expirationMillis
-    ) {
-        redisTemplate.opsForValue().set(
-                getKey(refreshToken),
-                memberId.toString(),
-                expirationMillis,
-                TimeUnit.MILLISECONDS
+    public Optional<String> findByMemberId(Long memberId) {
+        return Optional.ofNullable(
+                redisTemplate.opsForValue()
+                        .get(KEY_PREFIX + memberId)
         );
     }
 
-    /**
-     * 리프레시 토큰으로 회원 ID 조회
-     *
-     * @param refreshToken 리프레시 토큰
-     * @return 회원 ID, 없으면 null
-     */
-    public Long findMemberIdByToken(String refreshToken) {
-        String value = redisTemplate.opsForValue().get(getKey(refreshToken));
-        return value == null ? null : Long.valueOf(value);
+    /** 리프레시 토큰 삭제 (로그아웃) */
+    public void delete(Long memberId) {
+        redisTemplate.delete(key(memberId));
     }
 
-    /**
-     * 리프레시 토큰 삭제
-     *
-     * @param refreshToken 리프레시 토큰
-     */
-    public void delete(String refreshToken) {
-        redisTemplate.delete(getKey(refreshToken));
+    private String key(Long memberId) {
+        return KEY_PREFIX + memberId;
     }
 
-    /** 리프레시 토큰 키 조회 */
-    private String getKey(String refreshToken) {
-        return "refresh:" + refreshToken;
-    }
 }

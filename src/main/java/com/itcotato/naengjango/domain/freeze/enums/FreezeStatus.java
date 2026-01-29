@@ -2,7 +2,6 @@ package com.itcotato.naengjango.domain.freeze.enums;
 
 public enum FreezeStatus {
     FROZEN,      // 냉동 중
-    AVAILABLE,   // 해동 가능 상태 (기한 도달)
-    PURCHASED,   // 구매 완료
-    CANCELLED    // 취소
+    FAILED,   // 냉동 실패(= 구매 완료)
+    SUCCESS    // 냉동 성공
 }
