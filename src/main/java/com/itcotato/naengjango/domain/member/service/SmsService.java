@@ -98,4 +98,22 @@ public class SmsService {
 
         return "SUCCESS";
     }
+
+    /**
+     * 냉동 만료 알림 문자 발송
+     */
+    public void sendFreezeExpiredSms(String phoneNumber, String messageText) {
+        Message message = new Message();
+        message.setFrom(fromNumber);
+        message.setTo(phoneNumber);
+        message.setText(messageText);
+
+        try {
+            this.messageService.sendOne(
+                    new SingleMessageSendingRequest(message)
+            );
+        } catch (Exception e) {
+            throw new MemberException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

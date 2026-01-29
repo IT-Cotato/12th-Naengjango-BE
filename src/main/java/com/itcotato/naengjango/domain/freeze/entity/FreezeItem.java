@@ -12,8 +12,6 @@ import java.time.LocalDateTime;
 @Table(name = "freeze_item")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class FreezeItem extends BaseEntity {
 
     /**
@@ -51,11 +49,11 @@ public class FreezeItem extends BaseEntity {
     private int price;
 
     /**
-     * 냉동 종료 시간
-     * nullable (기본: frozenAt + 24시간)
+     * 냉동 상태
      */
-    @Column
-    private LocalDateTime deadline;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FreezeStatus status;
 
     /**
      * 냉동 시작 시간
@@ -64,44 +62,72 @@ public class FreezeItem extends BaseEntity {
     private LocalDateTime frozenAt;
 
     /**
-     * 냉동 상태
+     * 냉동 종료 시간
+     * nullable (기본: frozenAt + 24시간)
      */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private FreezeStatus status;
+    @Column
+    private LocalDateTime expiresAt;
 
     /**
-     * 냉동 만료 시간
+     * 상태 확정 시각, Frozen 이면 null
      */
-    private LocalDateTime expiresAt;
+    private LocalDateTime decidedAt;
 
     /**
      * 알림 전송 여부
      */
     private boolean notified;
 
-    /* =========================
-       비즈니스 로직
-       ========================= */
-
-    /**
-     * 구매 확정
-     */
-    public void purchase() {
-        this.status = FreezeStatus.PURCHASED;
+    /** 생성 메서드 */
+    public static FreezeItem create(Member member, String appName, String itemName, int price) {
+        LocalDateTime now = LocalDateTime.now();
+        FreezeItem item = new FreezeItem();
+        item.member = member;
+        item.appName = appName;
+        item.itemName = itemName;
+        item.price = price;
+        item.status = FreezeStatus.FROZEN;
+        item.frozenAt = now;
+        item.expiresAt = now.plusHours(24);
+        item.notified = false;
+        item.decidedAt = null;
+        return item;
     }
 
-    /**
-     * 구매 취소
-     */
-    public void cancel() {
+    /** 냉동 항목 수정 */
+    public void update(String appName, String itemName, int price) {
+        this.appName = appName;
+        this.itemName = itemName;
+        this.price = price;
+    }
+
+    /** 타이머 24H로 재설정" */
+    public void extend24Hours() {
+        LocalDateTime now = LocalDateTime.now();
+        this.frozenAt = now;
+        this.expiresAt = now.plusHours(24);
+        this.notified = false;
+    }
+
+    /** 상태 변경 메서드 - 성공 상태로 변경 */
+    public void markSuccess() {
         this.status = FreezeStatus.SUCCESS;
+        this.decidedAt = LocalDateTime.now();
     }
 
-    /**
-     * 냉동 해제 가능 상태로 변경
-     */
-    public void makeAvailable() {
-        this.status = FreezeStatus.AVAILABLE;
+    /** 상태 변경 메서드 - 실패 상태로 변경 */
+    public void markFailed() {
+        this.status = FreezeStatus.FAILED;
+        this.decidedAt = LocalDateTime.now();
+    }
+
+    /** 알림 전송 여부 설정 */
+    public void markNotified() {
+        this.notified = true;
+    }
+
+    /** 냉동 상태 확인 */
+    public boolean isFrozen() {
+        return this.status == FreezeStatus.FROZEN;
     }
 }

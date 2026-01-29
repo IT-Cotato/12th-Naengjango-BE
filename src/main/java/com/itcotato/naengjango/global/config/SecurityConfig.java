@@ -25,7 +25,6 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     /** 비밀번호 인코더 빈 등록 */
     @Bean
@@ -35,7 +34,10 @@ public class SecurityConfig {
 
     /** 보안 필터 체인 설정 */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            OAuth2SuccessHandler oAuth2SuccessHandler
+    ) throws Exception {
 
         http
                 // 기본 설정 비활성화
@@ -53,8 +55,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 // 인증 없이 허용
                         .requestMatchers(
-                                "/auth/localLogin",
-                                "/auth/oauth2/**",
+                                "/auth/**",
                                 "/oauth2/**",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",

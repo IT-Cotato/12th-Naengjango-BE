@@ -4,10 +4,13 @@ import com.itcotato.naengjango.domain.freeze.dto.FreezeRequestDto;
 import com.itcotato.naengjango.domain.freeze.dto.FreezeResponseDto;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import com.itcotato.naengjango.domain.freeze.exception.code.FreezeSuccessCode;
+import com.itcotato.naengjango.domain.freeze.service.FreezeService;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -15,253 +18,146 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/freeze")
+@RequestMapping("/api/freezes")
 public class FreezeController {
 
-    // private final FreezeService freezeService;
+    private final FreezeService freezeService;
 
     /**
-     * 냉동하기 등록
+     * 냉동 생성 (수동 등록)
      */
     @Operation(
-            summary = "냉동하기 등록 by 임준서 (개발 중)",
+            summary = "냉동 생성 by 임준서 (개발 완료)",
             description = """
-                    소비를 냉동 상태로 등록합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "FREEZE201_1",
-                    description = "냉동 등록 성공"
-            )
-    })
+                    냉동 생성 API 입니다.
+                    - 요청 바디에 냉동할 아이템 정보(이름, 카테고리, 가격 등)를 포함하여 전송합니다.
+                    - 성공 시 생성된 냉동 정보(아이디, 상태, 냉동 시작 시간 등)를 반환합니다.
+                    """)
     @PostMapping
-    public ApiResponse<FreezeResponseDto.CreateResponse> createFreeze(
-            @RequestBody FreezeRequestDto.CreateRequest request
+    public ApiResponse<FreezeResponseDto.Create> create(
+            @AuthenticationPrincipal Member member,
+            @RequestBody FreezeRequestDto.Create request
     ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_CREATE_SUCCESS,
-                new FreezeResponseDto.CreateResponse(
-                        1L,
-                        request.itemName(),
-                        request.price(),
-                        FreezeStatus.FROZEN,
-                        LocalDateTime.now(),
-                        LocalDateTime.now().plusHours(24)
-                )
-        );
+        FreezeResponseDto.Create response = freezeService.create(member, request);
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_CREATE_SUCCESS, response);
     }
 
     /**
-     * 냉동 목록 조회
+     * 냉동 중 목록 조회
+     * sort=latest | price
      */
-    @Operation(summary = "냉동 목록 조회 by 임준서 (개발 중)",
+    @Operation(
+            summary = "냉동 품목 조회 by 임준서 (개발 완료)",
             description = """
-                    사용자의 냉동 목록을 조회합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
+                    냉동 중인 품목들을 조회하는 API 입니다.
+                    - `sort` 파라미터로 정렬 기준을 선택할 수 있습니다.
+                        - `latest`: 최신 순 (기본값)
+                        - `price`: 가격 순
+                    - 성공 시 냉동 중인 품목들의 리스트를 반환합니다.
+                    """)
     @GetMapping
-    public ApiResponse<List<FreezeResponseDto.ListResponse>> getFreezeList() {
-
-        List<FreezeResponseDto.ListResponse> response = List.of(
-                new FreezeResponseDto.ListResponse(
-                        1L,
-                        "에어팟 프로",
-                        329000,
-                        FreezeStatus.FROZEN,
-                        LocalDateTime.now().plusHours(12)
-                )
-        );
-
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_LIST_SUCCESS,
-                response
-        );
-    }
-
-    /**
-     * 냉동 상세 조회
-     */
-    @Operation(summary = "냉동 상세 조회 by 임준서 (개발 중)",
-            description = """
-                    특정 냉동 항목의 상세 정보를 조회합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
-    @GetMapping("/{freezeId}")
-    public ApiResponse<FreezeResponseDto.DetailResponse> getFreezeDetail(
-            @PathVariable Long freezeId
+    public ApiResponse<List<FreezeResponseDto.Item>> getFrozenItems(
+            @AuthenticationPrincipal Member member,
+            @RequestParam(defaultValue = "latest") String sort
     ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_DETAIL_SUCCESS,
-                new FreezeResponseDto.DetailResponse(
-                        freezeId,
-                        "쿠팡",
-                        "에어팟 프로",
-                        329000,
-                        FreezeStatus.FROZEN,
-                        LocalDateTime.now().minusHours(1),
-                        LocalDateTime.now().plusHours(23)
-                )
-        );
+        List<FreezeResponseDto.Item> response = freezeService.getFrozenItems(member, sort);
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_LIST_SUCCESS, response);
     }
 
     /**
-     * 냉동 구매 확정
-     */
-    @Operation(summary = "냉동 항목 구매 확정 by 임준서 (개발 중)",
-            description = """
-                    특정 냉동 항목의 구매를 확정합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
-    @PostMapping("/{freezeId}/purchase")
-    public ApiResponse<Void> purchase(
-            @PathVariable Long freezeId
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_PURCHASE_SUCCESS,
-                null
-        );
-    }
-
-    /**
-     * 냉동 취소 (임시)
-     */
-    @Operation(summary = "냉동 항목 구매 취소 by 임준서 (개발 중)",
-            description = """
-                    특정 냉동 항목의 구매를 취소합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
-    @PostMapping("/{freezeId}/cancel")
-    public ApiResponse<Void> cancel(
-            @PathVariable Long freezeId
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_CANCEL_SUCCESS,
-                null
-        );
-    }
-
-    /**
-     * 냉동 삭제 (임시)
-     */
-    @Operation(summary = "냉동 항목 삭제 by 임준서 (개발 중)",
-            description = """
-                    특정 냉동 항목을 삭제합니다.
-                    - 현재는 서비스 미구현 상태로 임시 응답을 반환합니다.
-                    """
-    )
-    @DeleteMapping("/{freezeId}")
-    public ApiResponse<Void> delete(
-            @PathVariable Long freezeId
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_DELETE_SUCCESS,
-                null
-        );
-    }
-
-    /**
-     * 계속 냉동 (임시)
+     * 냉동 기록 수정
      */
     @Operation(
-            summary = "계속 냉동 by 임준서 (개발 중)",
+            summary = "냉동 기록 수정 by 임준서 (개발 완료)",
             description = """
-                선택한 냉동 항목들의 냉동 시간을 24시간 연장합니다.
-                - 여러 냉동 항목을 한 번에 처리합니다.
-                """
-    )
-    @PostMapping("/extend")
-    public ApiResponse<FreezeResponseDto.BatchResultResponse> extendFreeze(
-            @RequestBody FreezeRequestDto.BatchRequest request
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_EXTEND_SUCCESS,
-                FreezeResponseDto.BatchResultResponse.from(
-                        request.freezeItemIds(),
-                        "계속 냉동 처리 완료"
-                )
-        );
-    }
-
-    /**
-     * 냉동 성공 (임시)
-     */
-    @Operation(
-            summary = "냉동 성공 by 임준서 (개발 중)",
-            description = """
-                선택한 냉동 항목들을 구매하지 않은 것으로 처리합니다.
-                - 소비를 하지 않은 성공 케이스입니다.
-                """
-    )
-    @PostMapping("/success")
-    public ApiResponse<FreezeResponseDto.BatchResultResponse> freezeSuccess(
-            @RequestBody FreezeRequestDto.BatchRequest request
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_SUCCESS_SUCCESS,
-                FreezeResponseDto.BatchResultResponse.from(
-                        request.freezeItemIds(),
-                        "냉동 성공 처리 완료"
-                )
-        );
-    }
-
-    /**
-     * 냉동 실패 (임시)
-     */
-    @Operation(
-            summary = "냉동 실패 by 임준서 (개발 중)",
-            description = """
-                선택한 냉동 항목들을 구매 처리합니다.
-                - 냉동을 실패하고 실제 구매한 경우입니다.
-                """
-    )
-    @PostMapping("/fail")
-    public ApiResponse<FreezeResponseDto.BatchResultResponse> freezeFail(
-            @RequestBody FreezeRequestDto.BatchRequest request
-    ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_FAIL_SUCCESS,
-                FreezeResponseDto.BatchResultResponse.from(
-                        request.freezeItemIds(),
-                        "냉동 실패(구매) 처리 완료"
-                )
-        );
-    }
-
-    /**
-     * 냉동 수정
-     */
-    @Operation(
-            summary = "냉동 수정 (임시)",
-            description = """
-                냉동 항목의 정보를 수정합니다.
-                - 냉동 상태(FROZEN)인 항목만 수정 가능합니다.
-                - 상태 변경은 별도 API를 사용합니다.
-                """
-    )
+                    냉동 기록 수정 API 입니다.
+                    - `freezeId`: 수정할 냉동 기록의 ID
+                    - 요청 바디에 수정할 냉동 기록 정보(이름, 카테고리, 가격 등)를 포함하여 전송합니다.
+                    - 성공 시 수정된 냉동 기록 정보를 반환합니다.
+                    """)
     @PatchMapping("/{freezeId}")
-    public ApiResponse<FreezeResponseDto.DetailResponse> updateFreeze(
+    public ApiResponse<Void> update(
+            @AuthenticationPrincipal Member member,
             @PathVariable Long freezeId,
-            @RequestBody FreezeRequestDto.UpdateRequest request
+            @RequestBody FreezeRequestDto.Update request
     ) {
-        return ApiResponse.onSuccess(
-                FreezeSuccessCode.FREEZE_UPDATE_SUCCESS,
-                new FreezeResponseDto.DetailResponse(
-                        freezeId,
-                        request.appName(),
-                        request.itemName(),
-                        request.price(),
-                        FreezeStatus.FROZEN,
-                        LocalDateTime.now().minusHours(1),
-                        // 임시 응답이므로 서비스 로직에서 계산된 deadline 대신 고정값 사용
-                        LocalDateTime.now().plusHours(24)
-                )
-        );
+        freezeService.update(member, freezeId, request);
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_UPDATE_SUCCESS, null);
+    }
+
+    /**
+     * 계속 냉동 (24H 연장, 다중)
+     */
+    @Operation(
+            summary = "냉동 연장 by 임준서 (개발 완료)",
+            description = """
+                    냉동 연장 API 입니다.
+                    - 요청 바디에 연장할 냉동 기록 ID 리스트를 포함하여 전송합니다.
+                    - 성공 시 연장된 냉동 기록들의 정보를 반환합니다.
+                    """)
+    @PostMapping("/extend")
+    public ApiResponse<FreezeResponseDto.BulkAction> extend(
+            @AuthenticationPrincipal Member member,
+            @RequestBody FreezeRequestDto.Ids request
+    ) {
+        FreezeResponseDto.BulkAction response =  freezeService.extend(member, request.freezeIds());
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_EXTEND_SUCCESS, response);
+    }
+
+    /**
+     * 냉동 실패 (다중)
+     */
+    @Operation(
+            summary = "냉동 실패 by 임준서 (개발 완료)",
+            description = """
+                    냉동 실패 처리 API 입니다.
+                    - 요청 바디에 실패로 처리할 냉동 기록 ID 리스트를 포함하여 전송합니다.
+                    - 성공 시 실패로 처리된 냉동 기록들의 정보를 반환합니다
+                    """)
+    @PostMapping("/fail")
+    public ApiResponse<FreezeResponseDto.BulkAction> fail(
+            @AuthenticationPrincipal Member member,
+            @RequestBody FreezeRequestDto.Ids request
+    ) {
+        FreezeResponseDto.BulkAction response =  freezeService.fail(member, request.freezeIds());
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_PURCHASE_SUCCESS, response);
+    }
+
+    /**
+     * 냉동 성공 (다중)
+     */
+    @Operation(
+            summary = "냉동 성공 by 임준서 (개발 완료)",
+            description = """
+                    냉동 성공 처리 API 입니다.
+                    - 요청 바디에 성공으로 처리할 냉동 기록 ID 리스트를 포함하여 전송합니다.
+                    - 성공 시 성공으로 처리된 냉동 기록들의 정보를 반환합니다
+                    """)
+    @PostMapping("/success")
+    public ApiResponse<FreezeResponseDto.BulkAction> success(
+            @AuthenticationPrincipal Member member,
+            @RequestBody FreezeRequestDto.Ids request
+    ) {
+        FreezeResponseDto.BulkAction response =  freezeService.success(member, request.freezeIds());
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_SUCCESS_SUCCESS, response);
+    }
+
+    /**
+     * 선택 항목 기준 예산 미리보기
+     */
+    @Operation(
+            summary = "선택 항목 예산 조회 by 임준서 (개발 완료)",
+            description = """
+                    선택한 냉동 항목들의 예산 미리보기 API 입니다.
+                    - 요청 바디에 예산을 미리보기할 냉동 기록 ID 리스트를 포함하여 전송합니다.
+                    - 성공 시 선택한 냉동 항목들의 총 예산 금액을 반환합니다.
+                    """)
+    @PostMapping("/budget-preview")
+    public ApiResponse<FreezeResponseDto.BudgetPreview> budgetPreview(
+            @AuthenticationPrincipal Member member,
+            @RequestBody FreezeRequestDto.Ids request
+    ) {
+        FreezeResponseDto.BudgetPreview response  = freezeService.budgetPreview(member, request.freezeIds());
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_BUDGET_PREVIEW_SUCCESS, response);
     }
 }

@@ -9,9 +9,6 @@ import com.itcotato.naengjango.domain.member.enums.Role;
 import com.itcotato.naengjango.domain.member.enums.SocialType;
 import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
-import com.itcotato.naengjango.global.redis.RefreshTokenRedisRepository;
-import com.itcotato.naengjango.global.security.jwt.JwtClaims;
-import com.itcotato.naengjango.global.security.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +18,6 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
