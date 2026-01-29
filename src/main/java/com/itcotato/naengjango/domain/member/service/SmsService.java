@@ -116,4 +116,26 @@ public class SmsService {
             throw new MemberException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public void sendTempPassword(String phoneNumber, String tempPassword) {
+        Message message = new Message();
+        message.setFrom(fromNumber);
+        message.setTo(phoneNumber);
+        message.setText(buildTempPasswordMessage(tempPassword));
+
+        try {
+            this.messageService.sendOne(
+                    new SingleMessageSendingRequest(message)
+            );
+        } catch (Exception e) {
+            throw new MemberException(SmsErrorCode.SMS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private String buildTempPasswordMessage(String tempPassword) {
+        return String.format(
+                "[냉잔고]\n임시 비밀번호는 [%s] 입니다.\n로그인 후 반드시 비밀번호를 변경해주세요.",
+                tempPassword
+        );
+    }
 }

@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: false
     properties:

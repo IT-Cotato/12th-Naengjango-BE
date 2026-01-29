@@ -117,4 +117,28 @@ public class AuthController {
     public void googleLogin(HttpServletResponse response) throws IOException {
         response.sendRedirect("/oauth2/authorization/google");
     }
+
+    @PostMapping("/find-loginId")
+    public ApiResponse<AuthResponseDto.FindLoginIdResponse> findLoginId(
+            @RequestBody AuthRequestDto.FindLoginIdRequest request
+    ) {
+        String masked = authService.findLoginId(
+                request.name(),
+                request.phoneNumber()
+        );
+        AuthResponseDto.FindLoginIdResponse response = new AuthResponseDto.FindLoginIdResponse(masked);
+        return ApiResponse.onSuccess(AuthSuccessCode.FIND_LOGINID_SUCCESS, response);
+    }
+
+    @PostMapping("/find-password")
+    public ApiResponse<Void> findPassword(
+            @RequestBody AuthRequestDto.FindPasswordRequest request
+    ) {
+        authService.resetPassword(
+                request.name(),
+                request.loginId(),
+                request.phoneNumber()
+        );
+        return ApiResponse.onSuccess(AuthSuccessCode.FIND_PASSWORD_SUCCESS, null);
+    }
 }

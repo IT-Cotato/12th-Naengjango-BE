@@ -10,7 +10,7 @@ spring:
       port: 6379
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -24,6 +24,9 @@ spring:
             scope:
               - email
               - profile
+  sql:
+    init:
+      mode: always
 
 management:
   endpoints:

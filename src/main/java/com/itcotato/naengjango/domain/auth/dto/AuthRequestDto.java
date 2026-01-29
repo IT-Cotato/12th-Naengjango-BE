@@ -8,4 +8,15 @@ public class AuthRequestDto {
             @NotBlank String loginId,
             @NotBlank String password
     ) {}
+
+    public record FindLoginIdRequest(
+            String name,
+            String phoneNumber
+    ) {}
+
+    public record FindPasswordRequest(
+            String name,
+            String phoneNumber,
+            String loginId
+    ) {}
 }

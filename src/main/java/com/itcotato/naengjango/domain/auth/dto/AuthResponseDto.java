@@ -16,4 +16,8 @@ public class AuthResponseDto {
             String socialId,
             String name
     ) {}
+
+    public record FindLoginIdResponse(
+            String loginId
+    ) {}
 }

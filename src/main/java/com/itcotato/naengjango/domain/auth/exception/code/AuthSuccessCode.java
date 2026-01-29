@@ -29,7 +29,13 @@ public enum AuthSuccessCode implements BaseSuccessCode {
 
     AUTH_LOGIN_SUCCESS(HttpStatus.OK,
             "AUTH200_1",
-            "소셜 로그인에 성공했습니다.")
+            "소셜 로그인에 성공했습니다."),
+    FIND_LOGINID_SUCCESS(HttpStatus.OK,
+            "AUTH200_2",
+            "아이디 조회에 성공했습니다."),
+    FIND_PASSWORD_SUCCESS(HttpStatus.OK,
+            "AUTH200_3",
+            "비밀번호 재설정 문자 전송에 성공했습니다.")
     ;
 
     private final HttpStatus status;

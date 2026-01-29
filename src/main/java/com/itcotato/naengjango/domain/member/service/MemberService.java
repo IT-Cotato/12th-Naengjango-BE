@@ -117,7 +117,8 @@ public class MemberService {
         if (agreementIds != null && !agreementIds.isEmpty()) {
             List<MemberAgreement> memberAgreements = agreementIds.stream()
                     .map(agreementId -> {
-                        Agreement agreement = agreementRepository.getReferenceById(agreementId);
+                        Agreement agreement = agreementRepository.findById(agreementId)
+                                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 약관 ID: " + agreementId));
                         return MemberAgreement.builder()
                                 .member(member)
                                 .agreement(agreement)
