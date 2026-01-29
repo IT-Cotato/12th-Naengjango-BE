@@ -85,7 +85,7 @@ public class FreezeItem extends BaseEntity {
      * 구매 취소
      */
     public void cancel() {
-        this.status = FreezeStatus.CANCELLED;
+        this.status = FreezeStatus.SUCCESS;
     }
 
     /**
