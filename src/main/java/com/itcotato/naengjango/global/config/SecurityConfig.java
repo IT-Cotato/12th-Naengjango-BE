@@ -1,6 +1,7 @@
 package com.itcotato.naengjango.global.config;
 
 import com.itcotato.naengjango.global.security.jwt.JwtAuthenticationFilter;
+import com.itcotato.naengjango.global.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     /** 비밀번호 인코더 빈 등록 */
     @Bean
@@ -51,20 +53,25 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 // 인증 없이 허용
                         .requestMatchers(
-                                "/auth/**",
+                                "/auth/localLogin",
+                                "/auth/oauth2/**",
+                                "/oauth2/**",
                                 "/swagger-ui/**",
+                                "/swagger-resources/**",
                                 "/v3/api-docs/**",
+                                "/error",
                                 "/actuator/**",
-                                "/api/auth/login",
-                                "/api/auth/login/**",
-                                "/auth/login", "/auth/login/**"
+                                "/api/sms/**",
+                                "/api/members/**"
                         ).permitAll()
-                        // 로그인 없이 허용 가능한 경로
-                        .requestMatchers("/api/sms/**", "/swagger-ui/**", "/v3/api-docs/**",
-                                "/swagger-resources/**", "/error", "/api/members/**").permitAll()
 
                 // 그 외 요청은 인증 필요
                         .anyRequest().authenticated()
+                )
+
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth ->
+                        oauth.successHandler(oAuth2SuccessHandler)
                 )
 
                 // JWT 인증 필터 적용

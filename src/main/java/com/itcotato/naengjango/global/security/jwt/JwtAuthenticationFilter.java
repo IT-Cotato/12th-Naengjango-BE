@@ -5,13 +5,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * JWT 인증 필터
@@ -33,33 +36,64 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String token = resolveToken(request);
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (token != null && jwtProvider.validateToken(token)) {
-            Long memberId = jwtProvider.getMemberId(token);
+        // 토큰 없으면 그냥 통과 (인증 안 된 상태로 컨트롤러에서 막힘)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            UsernamePasswordAuthenticationToken authentication =
+        String token = authHeader.substring(7);
+
+        try {
+            // 토큰 검증 + 클레임 추출
+            JwtClaims claims = jwtProvider.extractClaims(token);
+
+            // 회원 가입 미완료 상태 제한
+            if (!claims.signupCompleted()
+                    && !isAllowedIncompleteSignup(request.getRequestURI())) {
+
+                response.sendError(
+                        HttpStatus.FORBIDDEN.value(),
+                        "Signup is not completed"
+                );
+                return;
+            }
+
+            // 인증 객체 생성
+            var authorities = List.of(
+                    new SimpleGrantedAuthority("ROLE_" + claims.role())
+            );
+
+            var authentication =
                     new UsernamePasswordAuthenticationToken(
-                            memberId,
+                            claims.memberId(),
                             null,
-                            Collections.emptyList()
+                            authorities
                     );
 
             SecurityContextHolder.getContext()
                     .setAuthentication(authentication);
+
+        } catch (Exception e) {
+            // 토큰 문제 → 인증 실패
+            SecurityContextHolder.clearContext();
+            response.sendError(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "Invalid or expired token"
+            );
+            return;
         }
 
         filterChain.doFilter(request, response);
     }
 
     /**
-     * 요청 헤더에서 "Authorization" 헤더를 추출하여 Bearer 토큰 반환
+     * signupCompleted=false 상태에서도 허용할 API
      */
-    private String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-        return null;
+    private boolean isAllowedIncompleteSignup(String uri) {
+        return uri.startsWith("/auth/social")
+                || uri.startsWith("/auth/logout");
     }
 }

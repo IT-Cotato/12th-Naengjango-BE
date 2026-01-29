@@ -94,4 +94,7 @@ public class Member extends BaseEntity {
         this.budget = budget;
     }
 
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 }

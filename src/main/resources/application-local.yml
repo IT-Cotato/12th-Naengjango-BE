@@ -14,6 +14,16 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
 
 management:
   endpoints:
@@ -23,8 +33,8 @@ management:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiration-ms: 1800000      # 30분
-  refresh-token-expiration-ms: 1209600000  # 14일
+  access-exp-seconds: 1800      # 30분
+  refresh-exp-seconds: 1209600  # 14일
 
 logging:
   level:

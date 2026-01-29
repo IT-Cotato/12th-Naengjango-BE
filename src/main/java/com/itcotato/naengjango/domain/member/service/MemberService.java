@@ -81,23 +81,32 @@ public class MemberService {
      * 구글(소셜) 회원가입
      */
     public void signupSocial(MemberRequestDTO.SocialSignupDTO request) {
-        // 이미 가입된 소셜 계정인지 확인
-        if (memberRepository.existsBySocialTypeAndSocialId(request.getSocialType(), request.getSocialId())) {
+        Member member = memberRepository.findBySocialTypeAndSocialId(
+                request.getSocialType(),
+                request.getSocialId()
+        ).orElseThrow(() ->
+                new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND)
+        );
+
+        // 휴대폰 인증 확인
+        validateSmsVerification(request.getPhoneNumber());
+
+        // 이미 가입 완료된 경우 방어
+        if (member.getPhoneNumber() != null) {
             throw new GeneralException(MemberErrorCode.ALREADY_SOCIAL_REGISTERED);
         }
 
-        Member member = Member.builder()
-                .socialId(request.getSocialId())
-                .socialType(request.getSocialType())
-                .loginId(request.getSocialType().toString() + "_" + request.getSocialId())
-                .name(request.getName())
-                .phoneNumber(request.getPhoneNumber())
-                .budget(request.getBudget())
-                .build();
+        // 추가 정보 세팅
+        member.updatePhoneNumber(request.getPhoneNumber());
+        member.updateBudget(request.getBudget());
 
-        memberRepository.save(member);
+        saveCommonMemberData(
+                member,
+                request.getAgreedAgreementIds(),
+                request.getFixedExpenditures()
+        );
 
-        saveCommonMemberData(member, request.getAgreedAgreementIds(), request.getFixedExpenditures());
+        redisTemplate.delete(VERIFIED_PREFIX + request.getPhoneNumber());
     }
 
     /**

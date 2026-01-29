@@ -70,6 +70,16 @@ public class FreezeItem extends BaseEntity {
     @Column(nullable = false, length = 20)
     private FreezeStatus status;
 
+    /**
+     * 냉동 만료 시간
+     */
+    private LocalDateTime expiresAt;
+
+    /**
+     * 알림 전송 여부
+     */
+    private boolean notified;
+
     /* =========================
        비즈니스 로직
        ========================= */
