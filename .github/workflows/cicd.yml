@@ -2,7 +2,7 @@ name: Naengjango CI/CD
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "feature/cicd" ]
 
 jobs:
   build-and-push:
