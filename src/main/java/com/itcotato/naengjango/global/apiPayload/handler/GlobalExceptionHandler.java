@@ -7,11 +7,13 @@ import com.itcotato.naengjango.global.exception.GeneralException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * 전역 예외 처리 클래스
  * 애플리케이션 전반에서 발생하는 예외를 처리
  */
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // 애플리케이션에서 발생하는 커스텀 예외를 처리
