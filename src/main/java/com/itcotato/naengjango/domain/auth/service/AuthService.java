@@ -67,11 +67,13 @@ public class AuthService {
 
         // 4. RefreshToken Redis 저장
         try {
+            log.info("[LOGIN] >>> redis save start");
             refreshTokenRedisRepository.save(
                     member.getId(),
                     refreshToken,
                     Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
-            );} catch (Exception e) {
+            );
+            log.info("[LOGIN] >>> redis save end");} catch (Exception e) {
             log.error("Redis save failed", e);
             throw e;
         }
