@@ -99,6 +99,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
+     * 인증 필터를 적용하지 않을 경로 설정
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.startsWith("/auth")
+                || uri.startsWith("/auth/sms");
+    }
+
+    /**
      * signupCompleted=false 상태에서도 허용할 API
      */
     private boolean isAllowedIncompleteSignup(String uri) {
