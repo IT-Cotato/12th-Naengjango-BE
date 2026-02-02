@@ -63,6 +63,9 @@ dependencies {
 
 	// oauth2 client
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// jedis
+	implementation 'redis.clients:jedis'
 }
 
 tasks.named('test') {

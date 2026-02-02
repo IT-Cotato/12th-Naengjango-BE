@@ -36,6 +36,7 @@ spring:
       timeout: 2s
       lettuce:
         shutdown-timeout: 0
+      client-type: jedis
 
 management:
   endpoints:
