@@ -73,6 +73,8 @@ public class AuthService {
             log.error("Redis save failed", e);
             throw e;
         }
+        
+        log.info("[LOGIN] refresh ttl = {}", jwtProvider.getRefreshTokenExpireSeconds());
 
         log.info("[LOGIN] after save refresh token");
 
