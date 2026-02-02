@@ -33,7 +33,6 @@ public class AuthService {
 
 
     /** 토큰 발급 공통 메서드 */
-    @Transactional
     public AuthResponseDto.TokenResponse issueToken(Member member) {
 
         // 1. 가입 완료 여부 판단
@@ -68,7 +67,7 @@ public class AuthService {
     }
 
     /** 기본 로그인 (아이디 + 비밀번호) */
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponseDto.TokenResponse localLogin(
             AuthRequestDto.LoginRequest request
     ) {
