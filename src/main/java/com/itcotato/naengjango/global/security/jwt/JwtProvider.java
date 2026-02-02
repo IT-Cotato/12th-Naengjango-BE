@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -15,6 +16,7 @@ import java.util.Date;
  * JWT 토큰 생성 및 검증을 담당하는 클래스
  */
 @Component
+@Slf4j
 public class JwtProvider {
 
     private static final String CLAIM_MEMBER_ID = "memberId";
@@ -40,6 +42,7 @@ public class JwtProvider {
     }
 
     public String createRefreshToken(JwtClaims claims) {
+        log.error("[JWT] refreshExpSeconds = {}", properties.refreshExpSeconds());
         return createToken(claims, properties.refreshExpSeconds());
     }
 
