@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         log.info("scheme={}, secure={}", request.getScheme(), request.isSecure());
+        log.info("[JWT-FILTER] uri={}", request.getRequestURI());
 
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
@@ -105,12 +106,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
 
-        return uri.startsWith("/auth")
-                || uri.startsWith("/oauth2")
-                || uri.startsWith("/swagger")
-                || uri.startsWith("/v3/api-docs")
-                || uri.startsWith("/api/sms")
-                || uri.startsWith("/api/members");
+        return uri.startsWith("/auth");
     }
 
     /**
