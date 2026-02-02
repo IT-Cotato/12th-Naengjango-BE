@@ -40,7 +40,6 @@ public class JwtProvider {
     }
 
     public String createRefreshToken(JwtClaims claims) {
-        log.error("[JWT] refreshExpSeconds = {}", properties.refreshExpSeconds());
         return createToken(claims, properties.refreshExpSeconds());
     }
 
