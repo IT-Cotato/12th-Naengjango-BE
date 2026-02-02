@@ -64,11 +64,15 @@ public class AuthService {
         String refreshToken = jwtProvider.createRefreshToken(claims);
 
         // 4. RefreshToken Redis 저장
-        refreshTokenRedisRepository.save(
-                member.getId(),
-                refreshToken,
-                Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
-        );
+        try {
+            refreshTokenRedisRepository.save(
+                    member.getId(),
+                    refreshToken,
+                    Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
+            );} catch (Exception e) {
+            log.error("Redis save failed", e);
+            throw e;
+        }
 
         log.info("[LOGIN] after save refresh token");
 
