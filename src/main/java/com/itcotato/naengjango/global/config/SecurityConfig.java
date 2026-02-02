@@ -93,8 +93,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of(
+        config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000", // 프론트 주소
+                "http://localhost:5173", // 프론트 주소
                 "https://*.nip.io",
                 "http://*.nip.io",
                 "https://15.134.213.116.nip.io"
