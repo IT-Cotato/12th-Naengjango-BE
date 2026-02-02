@@ -1,11 +1,39 @@
 services:
-  server:
-    container_name: naengjango-app
+  naengjango-app:
     image: gooroominuna/naengjango-app:latest
+    container_name: naengjango-app
     ports:
       - "8080:8080"
     env_file:
       - .env
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-    restart: always
+    depends_on:
+      - redis
+    networks:
+      - naengjango-network
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - naengjango-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM;
+      while :; do
+        certbot renew;
+        sleep 12h & wait $${!};
+      done;"
+    networks:
+      - naengjango-network
+
+networks:
+  naengjango-network:
+    driver: bridge
