@@ -55,3 +55,6 @@ coolsms:
     key: ${COOL_SMS_API_KEY}
     secret: ${COOL_SMS_API_SECRET}
   from: ${COOL_SMS_FROM_PHONE_NUMBER}
+
+server:
+  forward-headers-strategy: framework
