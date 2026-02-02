@@ -14,7 +14,6 @@ import com.itcotato.naengjango.global.redis.RefreshTokenRedisRepository;
 import com.itcotato.naengjango.global.security.jwt.JwtClaims;
 import com.itcotato.naengjango.global.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthService {
 
     private final MemberRepository memberRepository;
@@ -37,14 +35,10 @@ public class AuthService {
     /** 토큰 발급 공통 메서드 */
     public AuthResponseDto.TokenResponse issueToken(Member member) {
 
-        log.info("[LOGIN] before signupCompleted");
-
         // 1. 가입 완료 여부 판단
         boolean signupCompleted =
                 member.getPhoneNumber() != null
                         && !member.getMemberAgreements().isEmpty();
-
-        log.info("[LOGIN] after signupCompleted");
 
         // 2. Claims 생성
         JwtClaims claims = new JwtClaims(
@@ -53,35 +47,19 @@ public class AuthService {
                 signupCompleted
         );
 
-        log.info("[LOGIN] role={}", member.getRole());
-
-        log.info("[LOGIN] before create access token");
-
-        log.info("[LOGIN] before save refresh token");
-
         // 3. 토큰 발급
         String accessToken = jwtProvider.createAccessToken(claims);
         String refreshToken = jwtProvider.createRefreshToken(claims);
 
-        log.info("[LOGIN] refresh ttl = {}", jwtProvider.getRefreshTokenExpireSeconds());
-
         // 4. RefreshToken Redis 저장
         try {
-            log.info("[LOGIN] >>> redis save start");
             refreshTokenRedisRepository.save(
                     member.getId(),
                     refreshToken,
                     Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
-            );
-            log.info("[LOGIN] >>> redis save end");} catch (Exception e) {
-            log.error("Redis save failed", e);
+            );} catch (Exception e) {
             throw e;
         }
-
-        log.info("[LOGIN] refresh ttl = {}", jwtProvider.getRefreshTokenExpireSeconds());
-
-        log.info("[LOGIN] after save refresh token");
-
         // 5. 공통 응답 DTO
         return new AuthResponseDto.TokenResponse(
                 accessToken,
