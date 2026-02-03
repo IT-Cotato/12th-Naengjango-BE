@@ -4,7 +4,9 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+  sql:
+    init:
+      mode: always
 #  h2:
 #    console:
 #      enabled: true
@@ -17,7 +19,8 @@ spring:
     properties:
       hibernate:
         format_sql: false
-        
+    defer-datasource-initialization: true
+
   security:
     oauth2:
       client:
