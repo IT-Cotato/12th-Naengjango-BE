@@ -2,6 +2,7 @@ package com.itcotato.naengjango.global.config;
 
 import com.itcotato.naengjango.global.security.jwt.JwtAuthenticationFilter;
 import com.itcotato.naengjango.global.security.oauth.OAuth2SuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,6 +52,14 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                //
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // 인증 실패 시 302 리다이렉트 대신 401 Unauthorized 응답
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                )
 
                 // 요청별 접근 제어
                 .authorizeHttpRequests(auth -> auth
