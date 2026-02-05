@@ -2,6 +2,7 @@ package com.itcotato.naengjango.global.config;
 
 import com.itcotato.naengjango.global.security.jwt.JwtAuthenticationFilter;
 import com.itcotato.naengjango.global.security.oauth.OAuth2SuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,6 +53,14 @@ public class SecurityConfig {
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
+                //
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // 인증 실패 시 302 리다이렉트 대신 401 Unauthorized 응답
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                )
+
                 // 요청별 접근 제어
                 .authorizeHttpRequests(auth -> auth
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -98,7 +107,8 @@ public class SecurityConfig {
                 "http://localhost:5173", // 프론트 주소
                 "https://*.nip.io",
                 "http://*.nip.io",
-                "https://15.134.213.116.nip.io"
+                "https://15.134.213.116.nip.io",
+                "https://*.vercel.app" // 프론트 배포 주소
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
