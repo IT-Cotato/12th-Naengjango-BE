@@ -107,7 +107,8 @@ public class SecurityConfig {
                 "http://localhost:5173", // 프론트 주소
                 "https://*.nip.io",
                 "http://*.nip.io",
-                "https://15.134.213.116.nip.io"
+                "https://15.134.213.116.nip.io",
+                "https://*.vercel.app" // 프론트 배포 주소
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
