@@ -6,6 +6,7 @@ import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +62,25 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    // =========================
+    // 추가: 회원 탈퇴(소프트 삭제)
+    // =========================
+
+    /**
+     * 회원 탈퇴 처리 시각
+     * - null: 활성 회원
+     * - not null: 탈퇴(비활성) 회원
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    /**
+     * 탈퇴 사유(선택)
+     * - 운영/분석 목적. 원치 않으면 제거 가능
+     */
+    @Column(name = "withdraw_reason", length = 500)
+    private String withdrawReason;
+
     /** 회원 생성 시 기본 권한 설정 */
     @PrePersist
     private void setDefaultRole() {
@@ -103,5 +123,61 @@ public class Member extends BaseEntity {
      */
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+    // =========================
+    // 추가: 탈퇴 관련 메서드
+    // =========================
+
+    /**
+     * 탈퇴 여부
+     */
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    /**
+     * 회원 탈퇴 처리(소프트 삭제)
+     * - deletedAt 세팅
+     * - withdrawReason 저장(옵션)
+     * - 개인정보 익명화(마스킹)
+     */
+    public void withdraw(String reason) {
+        if (this.deletedAt != null) return; // 멱등 처리(이미 탈퇴면 다시 처리하지 않음)
+
+        this.deletedAt = LocalDateTime.now();
+        this.withdrawReason = reason;
+
+        anonymizePersonalInfo();
+    }
+
+    /**
+     * 개인정보 익명화
+     *
+     * 주의:
+     * - phoneNumber는 nullable=false 이므로 null로 두지 말고 마스킹 문자열로 대체
+     * - loginId가 unique 제약이 있다면, 충돌 방지를 위해 "deleted_{id}_{timestamp}" 등으로 변경 권장
+     */
+    private void anonymizePersonalInfo() {
+        // 이름 마스킹
+        this.name = "탈퇴회원";
+
+        // loginId 마스킹(LOCAL만 의미 있지만, unique 충돌 방지 목적)
+        // loginId가 null일 수 있으므로 방어
+        if (this.loginId != null) {
+            this.loginId = "deleted_" + this.id + "_" + System.currentTimeMillis();
+        }
+
+        // 전화번호 마스킹 (nullable=false)
+        this.phoneNumber = "deleted";
+
+        // 비밀번호 무력화 (LOCAL 계정이면 더 의미 있음)
+        this.password = "withdrawn";
+
+        // 소셜 식별자 제거(선택) - 필요시 null 처리
+        this.socialId = null;
+
+        // 예산 등 서비스성 데이터는 유지/삭제 정책에 따라 선택
+        // this.budget = null; // 원하면 이렇게
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -174,6 +175,170 @@ public class MemberService {
         member.updateBudget(req.budget());
         return new MyPageDto.BudgetResponse(member.getBudget());
     }
+
+    // =========================
+    // 추가: 이용약관 / 개인정보 처리 방침
+    // =========================
+
+    /**
+     * 이용약관 조회 (비로그인 허용 가능)
+     *
+     * 구현 방식 옵션:
+     * 1) DB에 정책 테이블을 두고 최신 버전 조회 (운영에 가장 적합)
+     * 2) application.yml 등에 박아두고 내려주기 (초기엔 편하지만 운영/버전 관리 어려움)
+     * 3) URL만 내려주고 프론트에서 WebView로 오픈 (서버 구현 가장 단순)
+     *
+     * 현재는 "스켈레톤" 형태로 응답만 구성해둠.
+     * 실제 구현 시 PolicyRepository/PolicyEntity를 만들거나, 설정값 로딩으로 교체하면 됨.
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.PolicyResponse getTermsPolicy() {
+        // TODO: 정책 소스(DB/Config/URL)에서 불러오도록 교체
+        return MyPageDto.PolicyResponse.builder()
+                .title("이용약관")
+                .version("v1.0")
+                .contentType(MyPageDto.PolicyContentType.MARKDOWN)
+                .content("이용약관 내용")
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * 개인정보 처리방침 조회 (비로그인 허용 가능)
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.PolicyResponse getPrivacyPolicy() {
+        // TODO: 정책 소스(DB/Config/URL)에서 불러오도록 교체
+        return MyPageDto.PolicyResponse.builder()
+                .title("개인정보 처리 방침")
+                .version("v1.0")
+                .contentType(MyPageDto.PolicyContentType.MARKDOWN)
+                .content("개인정보 처리 방침 내용")
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    // =========================
+    // 추가: FAQ (목록/상세)
+    // =========================
+
+    /**
+     * FAQ 목록 조회 (비로그인 허용 가능)
+     *
+     * - category, keyword, page, size 를 받아서 목록 형태로 반환
+     * - 실제 구현 시 FaqEntity/FaqRepository 필요
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.FaqListResponse getFaqs(String category, String keyword, int page, int size) {
+        // TODO: FAQ 테이블/레포지토리 구현 후 교체
+        // 임시로 빈 리스트 반환 (스켈레톤)
+        return MyPageDto.FaqListResponse.builder()
+                .items(List.of())
+                .page(page)
+                .size(size)
+                .totalElements(0L)
+                .totalPages(0)
+                .build();
+    }
+
+    /**
+     * FAQ 상세 조회 (비로그인 허용 가능)
+     *
+     * - faqId로 질문/답변 조회
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.FaqDetailResponse getFaqDetail(Long faqId) {
+        // TODO: FAQ 테이블/레포지토리 구현 후 교체
+        return MyPageDto.FaqDetailResponse.builder()
+                .faqId(faqId)
+                .category("기타")
+                .question("자주 묻는 질문?")
+                .answer("답변 내용")
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    // =========================
+    // 추가: 문의하기 (등록/내 문의 목록/내 문의 상세)
+    // =========================
+
+    /**
+     * 문의 등록 (로그인 사용자)
+     *
+     * - InquiryEntity/InquiryRepository 구현 필요
+     * - 최소 필드 추천: memberId, title, content, status, answer, createdAt, answeredAt
+     */
+    @Transactional
+    public MyPageDto.InquiryCreateResponse createInquiry(Long memberId, MyPageDto.InquiryCreateRequest request) {
+        // TODO: Inquiry 저장 로직으로 교체
+        // 예: Inquiry inquiry = inquiryRepository.save(...)
+        Long generatedId = 1L;
+
+        return MyPageDto.InquiryCreateResponse.builder()
+                .inquiryId(generatedId)
+                .status(MyPageDto.InquiryStatus.RECEIVED)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * 내 문의 목록 조회 (로그인 사용자)
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.InquiryListResponse getMyInquiries(Long memberId, int page, int size) {
+        // TODO: inquiryRepository.findByMemberId(...) + pageable 적용
+        return MyPageDto.InquiryListResponse.builder()
+                .items(List.of())
+                .page(page)
+                .size(size)
+                .totalElements(0L)
+                .totalPages(0)
+                .build();
+    }
+
+    /**
+     * 내 문의 상세 조회 (로그인 사용자)
+     *
+     * - memberId로 소유권 검증(다른 사람 문의 조회 방지)
+     */
+    @Transactional(readOnly = true)
+    public MyPageDto.InquiryDetailResponse getMyInquiryDetail(Long memberId, Long inquiryId) {
+        // TODO: inquiryRepository.findById(inquiryId) 후 memberId 일치 검증
+        return MyPageDto.InquiryDetailResponse.builder()
+                .inquiryId(inquiryId)
+                .title("문의 제목")
+                .content("문의 내용")
+                .status(MyPageDto.InquiryStatus.RECEIVED)
+                .answer(null)
+                .createdAt(LocalDateTime.now())
+                .answeredAt(null)
+                .build();
+    }
+
+    @Transactional
+    public MyPageDto.WithdrawResponse withdraw(Long memberId, MyPageDto.WithdrawRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        // 멱등 처리: 이미 탈퇴면 OK로 돌려도 됨(앱 UX 안정)
+        if (member.isDeleted()) {
+            return MyPageDto.WithdrawResponse.builder()
+                    .message("이미 탈퇴 처리된 계정입니다.")
+                    .build();
+        }
+
+        String reason = (request == null) ? null : request.reason();
+        member.withdraw(reason);
+
+        // (선택) Redis/JWT 블랙리스트 처리 등 토큰 무효화 정책이 있으면 여기서
+        // redisTemplate.opsForValue().set("jwt:blacklist:" + token, "true", ...)
+
+        return MyPageDto.WithdrawResponse.builder()
+                .message("탈퇴 처리 완료")
+                .build();
+    }
+
+
 
     private void validateSmsVerification(String phoneNumber) {
         String isVerified = redisTemplate.opsForValue().get(VERIFIED_PREFIX + phoneNumber);

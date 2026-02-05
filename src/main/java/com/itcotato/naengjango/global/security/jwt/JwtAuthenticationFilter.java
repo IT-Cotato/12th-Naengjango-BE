@@ -25,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
 
+
     /**
      * 요청 헤더에서 JWT 토큰을 추출하고 유효성을 검사하여
      * 인증 정보를 SecurityContext에 설정
@@ -36,13 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
+        System.out.println("[JWT] " + request.getMethod() + " " + request.getRequestURI() + " auth=" + authHeader);
         // 토큰 없으면 그냥 통과 (인증 안 된 상태로 컨트롤러에서 막힘)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -56,14 +58,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             JwtClaims claims = jwtProvider.extractClaims(token);
 
             // 회원 가입 미완료 상태 제한
-            if (!claims.signupCompleted()
-                    && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//            if (!claims.signupCompleted()
+//                    && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//
+//                response.sendError(
+//                        HttpStatus.FORBIDDEN.value(),
+//                        "Signup is not completed"
+//                );
+//                return;
+//            }
 
-                response.sendError(
-                        HttpStatus.FORBIDDEN.value(),
-                        "Signup is not completed"
-                );
-                return;
+            // 로컬에서는 가입 미완료 제한 해제 (테스트용)
+            if (!"local".equals(System.getProperty("spring.profiles.active"))) {
+                if (!claims.signupCompleted() && !isAllowedIncompleteSignup(request.getRequestURI())) {
+                    response.sendError(HttpStatus.FORBIDDEN.value(), "Signup is not completed");
+                    return;
+                }
             }
 
             // 인증 객체 생성

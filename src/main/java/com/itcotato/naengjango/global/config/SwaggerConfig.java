@@ -1,17 +1,26 @@
 package com.itcotato.naengjango.global.config;
 
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.servers.Server;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 @Configuration
+@OpenAPIDefinition(
+        info = @Info(title = "Naengjango API", version = "v1"),
+        security = { @SecurityRequirement(name = "BearerAuth") }
+)
 @SecurityScheme(
         name = "BearerAuth",
         type = SecuritySchemeType.HTTP,
@@ -22,7 +31,11 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI swagger() {
-        Info info = new Info().title("Naengjango API").description("냉잔고 백엔드 API 문서").version("v1.0.0");
+        io.swagger.v3.oas.models.info.Info info =
+                new io.swagger.v3.oas.models.info.Info()
+                        .title("Naengjango API")
+                        .description("냉잔고 백엔드 API 문서")
+                        .version("v1.0.0");
 
         SecurityRequirement securityRequirement = new SecurityRequirement().addList("BearerAuth");
 
@@ -34,6 +47,5 @@ public class SwaggerConfig {
                                 .url("https://15.134.213.116.nip.io")
                                 .description("Production server")
                 ));
-
     }
 }
