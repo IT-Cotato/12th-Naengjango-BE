@@ -10,7 +10,10 @@ import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.entity.SnowballLedger;
 import com.itcotato.naengjango.domain.member.repository.SnowballLedgerRepository;
+import com.itcotato.naengjango.domain.member.service.IglooService;
+import com.itcotato.naengjango.domain.member.service.SnowballService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,8 @@ public class FreezeService {
 
     private final FreezeItemRepository freezeItemRepository;
     private final SnowballLedgerRepository snowballLedgerRepository;
+    private final SnowballService snowballService;
+    private final IglooService iglooService;
 
     /**
      * 냉동 생성 (수동 등록)
@@ -136,34 +141,30 @@ public class FreezeService {
      * 냉동 실패 (다중)
      */
     @Transactional
-    public FreezeResponseDto.BulkAction fail(
-            Member member,
-            List<Long> freezeIds
-    ) {
+    public FreezeResponseDto.BulkAction fail(Member member, List<Long> freezeIds) {
         List<FreezeItem> items = findOwnedFreezes(freezeIds, member);
+
+        int failCount = 0;
 
         for (FreezeItem item : items) {
             if (item.getStatus() != FreezeStatus.FROZEN) {
                 throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_STATUS);
             }
             item.markFailed();
+            failCount++;
         }
 
-        return new FreezeResponseDto.BulkAction(
-                items.size(),
-                0,
-                false
-        );
+        // 실패 누적 반영 + 하락/방어 처리
+        iglooService.applyFailures(member, failCount);
+
+        return new FreezeResponseDto.BulkAction(failCount, 0, false);
     }
 
     /**
-     * 냉동 성공 (다중) + 눈덩이 지급 + 연속 3회 보너스
+     * 냉동 성공 (다중) + 눈덩이 지급(기본 2개 제한) + 3일 연속 보너스
      */
     @Transactional
-    public FreezeResponseDto.BulkAction success(
-            Member member,
-            List<Long> freezeIds
-    ) {
+    public FreezeResponseDto.BulkAction success(Member member, List<Long> freezeIds) {
         List<FreezeItem> items = findOwnedFreezes(freezeIds, member);
 
         int successCount = 0;
@@ -178,28 +179,28 @@ public class FreezeService {
 
         int snowballsGranted = 0;
 
-        // 기본: 성공 1개당 눈덩이 1개
-        for (int i = 0; i < successCount; i++) {
-            snowballLedgerRepository.save(
-                    SnowballLedger.earn(member, 1, "FREEZE_SUCCESS")
-            );
+        // =========================
+        // 기본 지급: 하루 최대 2개
+        // =========================
+        int todayBasicEarned = snowballService.getTodayBasicEarned(member); // reason=FREEZE_SUCCESS 합
+        int canEarn = Math.max(0, 2 - todayBasicEarned);
+        int basicEarn = Math.min(successCount, canEarn);
+
+        for (int i = 0; i < basicEarn; i++) {
+            snowballService.earn(member, 1, SnowballService.REASON_FREEZE_SUCCESS);
             snowballsGranted++;
         }
 
-        // 연속 3회 성공 보너스
-        boolean streakBonus = isStreak3(member);
+        // =========================
+        // 보너스: 연속 3일 성공이면 +2 (기본 제한과 무관)
+        // =========================
+        boolean streakBonus = isStreak3Days(member);
         if (streakBonus) {
-            snowballLedgerRepository.save(
-                    SnowballLedger.earn(member, 1, "FREEZE_STREAK_3")
-            );
-            snowballsGranted++;
+            snowballService.earn(member, 2, SnowballService.REASON_FREEZE_STREAK_3_DAYS);
+            snowballsGranted += 2;
         }
 
-        return new FreezeResponseDto.BulkAction(
-                successCount,
-                snowballsGranted,
-                streakBonus
-        );
+        return new FreezeResponseDto.BulkAction(successCount, snowballsGranted, streakBonus);
     }
 
     /**
@@ -276,19 +277,23 @@ public class FreezeService {
     }
 
     /**
-     * 최근 확정 3개가 모두 SUCCESS인지 체크
+     * 연속 3일 성공 판별:
+     * - SUCCESS의 decidedAt 날짜를 distinct day로 최근 3개 가져온 뒤
+     * - (D0, D1, D2)가 연속인지 체크
      */
-    private boolean isStreak3(Member member) {
-        List<FreezeItem> last3 =
-                freezeItemRepository.findTop3ByMemberAndStatusInOrderByDecidedAtDesc(
-                        member,
-                        List.of(FreezeStatus.SUCCESS, FreezeStatus.FAILED)
-                );
+    private boolean isStreak3Days(Member member) {
+        List<LocalDate> dates = freezeItemRepository.findRecentSuccessDatesDistinct(
+                member,
+                PageRequest.of(0, 3)
+        );
 
-        if (last3.size() < 3) return false;
+        if (dates.size() < 3) return false;
 
-        return last3.stream()
-                .allMatch(item -> item.getStatus() == FreezeStatus.SUCCESS);
+        LocalDate d0 = dates.get(0);
+        LocalDate d1 = dates.get(1);
+        LocalDate d2 = dates.get(2);
+
+        return d0.minusDays(1).equals(d1) && d1.minusDays(1).equals(d2);
     }
 
     private int remainingDaysInMonthInclusive(LocalDate today) {

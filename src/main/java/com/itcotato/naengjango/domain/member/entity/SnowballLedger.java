@@ -40,4 +40,13 @@ public class SnowballLedger {
         l.createdAt = LocalDateTime.now();
         return l;
     }
+
+    public static SnowballLedger spend(Member member, int amount, String reason) {
+        SnowballLedger l = new SnowballLedger();
+        l.member = member;
+        l.amount = -amount;
+        l.reason = reason;
+        l.createdAt = LocalDateTime.now();
+        return l;
+    }
 }

@@ -4,9 +4,11 @@ import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,4 +48,15 @@ public interface FreezeItemRepository extends JpaRepository<FreezeItem, Long> {
 
     // streak 체크용
     List<FreezeItem> findTop3ByMemberAndStatusInOrderByDecidedAtDesc(Member member, List<FreezeStatus> statuses);
+
+    // 최근 성공 날짜 조회 (중복 제거)
+    @Query("""
+           select distinct cast(f.decidedAt as date)
+           from FreezeItem f
+           where f.member = :member
+             and f.status = com.itcotato.naengjango.domain.freeze.enums.FreezeStatus.SUCCESS
+             and f.decidedAt is not null
+           order by cast(f.decidedAt as date) desc
+           """)
+    List<LocalDate> findRecentSuccessDatesDistinct(Member member, Pageable pageable);
 }

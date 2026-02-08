@@ -103,6 +103,7 @@ public class SecurityConfig {
 
         config.setAllowCredentials(true);
         config.setAllowedOriginPatterns(List.of(
+                "http://localhost:8080", // 백엔드 로컬 테스트 주소
                 "http://localhost:3000", // 프론트 주소
                 "http://localhost:5173", // 프론트 주소
                 "https://*.nip.io",

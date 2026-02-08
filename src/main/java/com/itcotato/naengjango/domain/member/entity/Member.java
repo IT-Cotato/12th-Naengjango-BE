@@ -62,6 +62,14 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    /** 회원의 현재 이글루 레벨 */
+    @Column(nullable = false)
+    private int iglooLevel = 1;
+
+    /** 회원의 냉동 실패 누적 횟수 */
+    @Column(nullable = false)
+    private int freezeFailCount = 0;
+
     // =========================
     // 추가: 회원 탈퇴(소프트 삭제)
     // =========================
@@ -84,9 +92,8 @@ public class Member extends BaseEntity {
     /** 회원 생성 시 기본 권한 설정 */
     @PrePersist
     private void setDefaultRole() {
-        if (this.role == null) {
-            this.role = Role.USER;
-        }
+        if (this.role == null) this.role = Role.USER;
+        if (this.iglooLevel == 0) this.iglooLevel = 1;
     }
 
     /**
@@ -95,6 +102,7 @@ public class Member extends BaseEntity {
     public boolean isLocalAccount() {
         return this.socialType == SocialType.LOCAL;
     }
+
     @Builder.Default
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<MemberAgreement> memberAgreements = new ArrayList<>();
@@ -116,6 +124,32 @@ public class Member extends BaseEntity {
 
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    // 냉동 실패 누적 관련 메서드
+    public void addFreezeFailCount(int delta) {
+        if (delta <= 0) return;
+        this.freezeFailCount += delta;
+    }
+
+    public boolean reachedFailThreshold(int threshold) {
+        return this.freezeFailCount >= threshold;
+    }
+
+    public void resetFreezeFailCount() {
+        this.freezeFailCount = 0;
+    }
+
+    public void downIglooLevel() {
+        if (this.iglooLevel > 1) this.iglooLevel -= 1;
+    }
+
+    public void upIglooLevel() {
+        if (this.iglooLevel < 5) this.iglooLevel += 1;
+    }
+
+    public boolean isMaxIglooLevel() {
+        return this.iglooLevel >= 5;
     }
 
     /**
