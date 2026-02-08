@@ -1,10 +1,12 @@
 package com.itcotato.naengjango.global.security.jwt;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,7 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
@@ -68,13 +71,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //                return;
 //            }
 
-            // 로컬에서는 가입 미완료 제한 해제 (테스트용)
-            if (!"local".equals(System.getProperty("spring.profiles.active"))) {
-                if (!claims.signupCompleted() && !isAllowedIncompleteSignup(request.getRequestURI())) {
-                    response.sendError(HttpStatus.FORBIDDEN.value(), "Signup is not completed");
-                    return;
-                }
-            }
+//            // 로컬에서는 가입 미완료 제한 해제 (테스트용)
+//            if (!"local".equals(System.getProperty("spring.profiles.active"))) {
+//                if (!claims.signupCompleted() && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//                    response.sendError(HttpStatus.FORBIDDEN.value(), "Signup is not completed");
+//                    return;
+//                }
+//            }
+
+            Member member = jwtProvider.getMember(token);
 
             // 인증 객체 생성
             var authorities = List.of(
@@ -83,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             var authentication =
                     new UsernamePasswordAuthenticationToken(
-                            claims.memberId(),
+                            member,
                             null,
                             authorities
                     );
@@ -100,6 +105,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
             return;
         }
+
+        log.debug("[JWT] request uri = {}", request.getRequestURI());
+        log.debug("[JWT] Authorization = {}", request.getHeader("Authorization"));
 
         filterChain.doFilter(request, response);
     }
