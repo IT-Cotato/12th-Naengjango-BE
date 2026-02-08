@@ -8,10 +8,9 @@ import com.itcotato.naengjango.domain.freeze.exception.FreezeException;
 import com.itcotato.naengjango.domain.freeze.exception.code.FreezeErrorCode;
 import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import com.itcotato.naengjango.domain.member.entity.SnowballLedger;
-import com.itcotato.naengjango.domain.member.repository.SnowballLedgerRepository;
-import com.itcotato.naengjango.domain.member.service.IglooService;
-import com.itcotato.naengjango.domain.member.service.SnowballService;
+import com.itcotato.naengjango.domain.snowball.repository.SnowballLedgerRepository;
+import com.itcotato.naengjango.domain.igloo.service.IglooService;
+import com.itcotato.naengjango.domain.snowball.service.SnowballService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -282,16 +281,19 @@ public class FreezeService {
      * - (D0, D1, D2)가 연속인지 체크
      */
     private boolean isStreak3Days(Member member) {
-        List<LocalDate> dates = freezeItemRepository.findRecentSuccessDatesDistinct(
-                member,
-                PageRequest.of(0, 3)
-        );
+        List<LocalDate> successDates =
+        freezeItemRepository.findRecentSuccessDecidedAt(
+                        member,
+                        PageRequest.of(0, 3)
+                ).stream()
+                .map(LocalDateTime::toLocalDate)
+                .toList();
 
-        if (dates.size() < 3) return false;
+        if (successDates.size() < 3) return false;
 
-        LocalDate d0 = dates.get(0);
-        LocalDate d1 = dates.get(1);
-        LocalDate d2 = dates.get(2);
+        LocalDate d0 = successDates.get(0);
+        LocalDate d1 = successDates.get(1);
+        LocalDate d2 = successDates.get(2);
 
         return d0.minusDays(1).equals(d1) && d1.minusDays(1).equals(d2);
     }

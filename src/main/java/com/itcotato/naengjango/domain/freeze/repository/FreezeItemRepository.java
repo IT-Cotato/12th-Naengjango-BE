@@ -46,17 +46,17 @@ public interface FreezeItemRepository extends JpaRepository<FreezeItem, Long> {
     // 만료 알림 대상 조회
     List<FreezeItem> findByExpiresAtBeforeAndNotifiedFalseAndStatus(LocalDateTime now, FreezeStatus status);
 
-    // streak 체크용
-    List<FreezeItem> findTop3ByMemberAndStatusInOrderByDecidedAtDesc(Member member, List<FreezeStatus> statuses);
-
     // 최근 성공 날짜 조회 (중복 제거)
     @Query("""
-           select distinct cast(f.decidedAt as date)
-           from FreezeItem f
-           where f.member = :member
-             and f.status = com.itcotato.naengjango.domain.freeze.enums.FreezeStatus.SUCCESS
-             and f.decidedAt is not null
-           order by cast(f.decidedAt as date) desc
-           """)
-    List<LocalDate> findRecentSuccessDatesDistinct(Member member, Pageable pageable);
+    select distinct f.decidedAt
+    from FreezeItem f
+    where f.member = :member
+      and f.status = 'SUCCESS'
+      and f.decidedAt is not null
+    order by f.decidedAt desc
+""")
+    List<LocalDateTime> findRecentSuccessDecidedAt(
+            @Param("member") Member member,
+            Pageable pageable
+    );
 }
