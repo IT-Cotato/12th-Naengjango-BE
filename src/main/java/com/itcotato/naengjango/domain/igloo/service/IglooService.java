@@ -2,7 +2,7 @@ package com.itcotato.naengjango.domain.igloo.service;
 
 import com.itcotato.naengjango.domain.igloo.exception.IglooException;
 import com.itcotato.naengjango.domain.igloo.exception.code.IglooErrorCode;
-import com.itcotato.naengjango.domain.member.dto.IglooResponseDto;
+import com.itcotato.naengjango.domain.igloo.dto.IglooResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import com.itcotato.naengjango.domain.snowball.service.SnowballService;

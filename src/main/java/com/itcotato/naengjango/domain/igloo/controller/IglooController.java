@@ -2,7 +2,7 @@ package com.itcotato.naengjango.domain.igloo.controller;
 
 import com.itcotato.naengjango.domain.igloo.exception.code.IglooSuccessCode;
 import com.itcotato.naengjango.domain.igloo.service.IglooService;
-import com.itcotato.naengjango.domain.member.dto.IglooResponseDto;
+import com.itcotato.naengjango.domain.igloo.dto.IglooResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;

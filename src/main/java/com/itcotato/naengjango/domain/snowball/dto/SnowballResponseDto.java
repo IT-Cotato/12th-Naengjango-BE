@@ -1,4 +1,4 @@
-package com.itcotato.naengjango.domain.member.dto;
+package com.itcotato.naengjango.domain.snowball.dto;
 
 import java.time.LocalDateTime;
 
