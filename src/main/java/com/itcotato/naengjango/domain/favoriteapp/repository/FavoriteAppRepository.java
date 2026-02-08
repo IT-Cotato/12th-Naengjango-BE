@@ -1,6 +1,6 @@
-package com.itcotato.naengjango.domain.member.repository;
+package com.itcotato.naengjango.domain.favoriteapp.repository;
 
-import com.itcotato.naengjango.domain.member.entity.FavoriteApp;
+import com.itcotato.naengjango.domain.favoriteapp.entity.FavoriteApp;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 

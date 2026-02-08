@@ -34,9 +34,25 @@ public class FreezeResponseDto {
      * - 성공 / 실패 / 연장
      */
     public record BulkAction(
+            ActionResult action,
+            StatusSnapshot status
+    ) {}
+
+    /**
+     * 상태 스냅샷 응답
+     */
+    public record ActionResult(
             int affectedCount,
-            int snowballsGranted,
-            boolean streakBonusTriggered
+            int snowballsGranted
+    ) {}
+
+    /**
+     * 요청 이후 "현재 사용자 상태
+     */
+    public record StatusSnapshot(
+            int currentSnowballBalance,
+            boolean isStreak,
+            int streakDays
     ) {}
 
     /**
