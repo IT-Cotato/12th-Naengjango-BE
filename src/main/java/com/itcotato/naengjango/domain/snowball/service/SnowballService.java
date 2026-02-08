@@ -1,9 +1,9 @@
-package com.itcotato.naengjango.domain.member.service;
+package com.itcotato.naengjango.domain.snowball.service;
 
 import com.itcotato.naengjango.domain.member.dto.SnowballResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import com.itcotato.naengjango.domain.member.entity.SnowballLedger;
-import com.itcotato.naengjango.domain.member.repository.SnowballLedgerRepository;
+import com.itcotato.naengjango.domain.snowball.entity.SnowballLedger;
+import com.itcotato.naengjango.domain.snowball.repository.SnowballLedgerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

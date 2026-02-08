@@ -1,5 +1,6 @@
-package com.itcotato.naengjango.domain.member.entity;
+package com.itcotato.naengjango.domain.snowball.entity;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

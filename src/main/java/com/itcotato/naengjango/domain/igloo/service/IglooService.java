@@ -1,10 +1,11 @@
-package com.itcotato.naengjango.domain.member.service;
+package com.itcotato.naengjango.domain.igloo.service;
 
+import com.itcotato.naengjango.domain.igloo.exception.IglooException;
+import com.itcotato.naengjango.domain.igloo.exception.code.IglooErrorCode;
 import com.itcotato.naengjango.domain.member.dto.IglooResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import com.itcotato.naengjango.domain.member.exception.MemberException;
-import com.itcotato.naengjango.domain.member.exception.code.IglooErrorCode;
 import com.itcotato.naengjango.domain.member.repository.MemberRepository;
+import com.itcotato.naengjango.domain.snowball.service.SnowballService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class IglooService {
 
         if (m.isMaxIglooLevel()) {
             // max면 예외처리
-            throw new MemberException(IglooErrorCode.IGLOO_LEVEL_MAX);
+            throw new IglooException(IglooErrorCode.IGLOO_LEVEL_MAX);
         }
 
         int before = m.getIglooLevel();
@@ -53,7 +54,7 @@ public class IglooService {
 
         int balance = snowballService.getBalance(m);
         if (balance < cost) {
-            throw new MemberException(IglooErrorCode.SNOWBALL_INSUFFICIENT);
+            throw new IglooException(IglooErrorCode.SNOWBALL_INSUFFICIENT);
         }
 
         // 소비 → 업그레이드

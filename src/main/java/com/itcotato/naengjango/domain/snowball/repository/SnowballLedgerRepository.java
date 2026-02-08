@@ -1,7 +1,7 @@
-package com.itcotato.naengjango.domain.member.repository;
+package com.itcotato.naengjango.domain.snowball.repository;
 
 import com.itcotato.naengjango.domain.member.entity.Member;
-import com.itcotato.naengjango.domain.member.entity.SnowballLedger;
+import com.itcotato.naengjango.domain.snowball.entity.SnowballLedger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
