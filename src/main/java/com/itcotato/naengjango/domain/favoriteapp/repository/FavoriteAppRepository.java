@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface FavoriteAppRepository extends JpaRepository<FavoriteApp, Long> {
 
-    // 특정 회원의 모든 즐겨찾기 앱 조회
+    boolean existsByMemberAndAppName(Member member, String appName);
+
     List<FavoriteApp> findByMember(Member member);
 
-    // 특정 회원이 특정 앱을 즐겨찾기에 추가했는지 확인
-    boolean existsByMemberAndAppName(Member member, String appName);
+    void deleteByIdAndMember(Long id, Member member);
 }
