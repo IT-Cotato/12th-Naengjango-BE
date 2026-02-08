@@ -1,9 +1,12 @@
 package com.itcotato.naengjango.domain.member.service;
 
+import com.itcotato.naengjango.domain.member.dto.SnowballResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.entity.SnowballLedger;
 import com.itcotato.naengjango.domain.member.repository.SnowballLedgerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,5 +45,37 @@ public class SnowballService {
     @Transactional
     public void spend(Member member, int amount, String reason) {
         snowballLedgerRepository.save(SnowballLedger.spend(member, amount, reason));
+    }
+
+    @Transactional(readOnly = true)
+    public SnowballResponseDto.Summary getSummary(Member member) {
+
+        int total = snowballLedgerRepository.sumBalance(member);
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.plusDays(1).atStartOfDay();
+
+        int todayEarned =
+                snowballLedgerRepository.sumTodayEarned(member, start, end);
+
+        return new SnowballResponseDto.Summary(
+                total,
+                todayEarned
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SnowballResponseDto.History> getHistory(
+            Member member,
+            Pageable pageable
+    ) {
+        return snowballLedgerRepository
+                .findByMemberOrderByCreatedAtDesc(member, pageable)
+                .map(l -> new SnowballResponseDto.History(
+                        l.getAmount(),
+                        l.getReason(),
+                        l.getCreatedAt()
+                ));
     }
 }
