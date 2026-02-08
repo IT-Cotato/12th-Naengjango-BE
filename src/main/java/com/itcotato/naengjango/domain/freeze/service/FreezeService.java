@@ -130,9 +130,8 @@ public class FreezeService {
         }
 
         return new FreezeResponseDto.BulkAction(
-                items.size(),
-                0,
-                false
+                new FreezeResponseDto.ActionResult(items.size(), 0),
+                null
         );
     }
 
@@ -156,7 +155,10 @@ public class FreezeService {
         // 실패 누적 반영 + 하락/방어 처리
         iglooService.applyFailures(member, failCount);
 
-        return new FreezeResponseDto.BulkAction(failCount, 0, false);
+        return new FreezeResponseDto.BulkAction(
+                new FreezeResponseDto.ActionResult(failCount, 0),
+                null
+        );
     }
 
     /**
@@ -193,13 +195,27 @@ public class FreezeService {
         // =========================
         // 보너스: 연속 3일 성공이면 +2 (기본 제한과 무관)
         // =========================
-        boolean streakBonus = isStreak3Days(member);
-        if (streakBonus) {
+        int streakDays = getCurrentStreakDays(member);
+        boolean isStreak = streakDays > 0;
+
+        if (streakDays == 3) {
             snowballService.earn(member, 2, SnowballService.REASON_FREEZE_STREAK_3_DAYS);
             snowballsGranted += 2;
         }
 
-        return new FreezeResponseDto.BulkAction(successCount, snowballsGranted, streakBonus);
+        int balance = snowballService.getBalance(member);
+
+        return new FreezeResponseDto.BulkAction(
+                new FreezeResponseDto.ActionResult(
+                        successCount,
+                        snowballsGranted
+                ),
+                new FreezeResponseDto.StatusSnapshot(
+                        balance,
+                        streakDays > 0,
+                        streakDays
+                )
+        );
     }
 
     /**
@@ -276,26 +292,35 @@ public class FreezeService {
     }
 
     /**
-     * 연속 3일 성공 판별:
-     * - SUCCESS의 decidedAt 날짜를 distinct day로 최근 3개 가져온 뒤
-     * - (D0, D1, D2)가 연속인지 체크
+     * 현재 연속 성공 며칠째인지 반환
      */
-    private boolean isStreak3Days(Member member) {
+    private int getCurrentStreakDays(Member member) {
+        // 최근 성공 날짜들을 최신순으로 조회
         List<LocalDate> successDates =
-        freezeItemRepository.findRecentSuccessDecidedAt(
-                        member,
-                        PageRequest.of(0, 3)
-                ).stream()
-                .map(LocalDateTime::toLocalDate)
-                .toList();
+                freezeItemRepository.findRecentSuccessDecidedAt(
+                                member,
+                                PageRequest.of(0, 30) // 넉넉하게
+                        ).stream()
+                        .map(LocalDateTime::toLocalDate)
+                        .toList();
 
-        if (successDates.size() < 3) return false;
+        if (successDates.isEmpty()) return 0;
 
-        LocalDate d0 = successDates.get(0);
-        LocalDate d1 = successDates.get(1);
-        LocalDate d2 = successDates.get(2);
+        int streak = 1; // 첫 날은 무조건 카운트
+        LocalDate prev = successDates.get(0);
 
-        return d0.minusDays(1).equals(d1) && d1.minusDays(1).equals(d2);
+        for (int i = 1; i < successDates.size(); i++) {
+            LocalDate curr = successDates.get(i);
+
+            if (prev.minusDays(1).equals(curr)) {
+                streak++;
+                prev = curr;
+            } else {
+                break; // 연속 끊기면 종료
+            }
+        }
+
+        return streak;
     }
 
     private int remainingDaysInMonthInclusive(LocalDate today) {
