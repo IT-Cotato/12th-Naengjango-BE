@@ -1,6 +1,6 @@
 package com.itcotato.naengjango.domain.snowball.controller;
 
-import com.itcotato.naengjango.domain.member.dto.SnowballResponseDto;
+import com.itcotato.naengjango.domain.snowball.dto.SnowballResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.snowball.exception.code.SnowballSuccessCode;
 import com.itcotato.naengjango.domain.snowball.service.SnowballService;
