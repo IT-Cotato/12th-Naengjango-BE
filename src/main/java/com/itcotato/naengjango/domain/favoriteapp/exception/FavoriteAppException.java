@@ -4,7 +4,5 @@ import com.itcotato.naengjango.global.apiPayload.code.BaseErrorCode;
 import com.itcotato.naengjango.global.exception.GeneralException;
 
 public class FavoriteAppException extends GeneralException {
-    public FavoriteAppException(BaseErrorCode code) {
-        super(code);
-    }
+    public FavoriteAppException(BaseErrorCode code) {super(code);}
 }
