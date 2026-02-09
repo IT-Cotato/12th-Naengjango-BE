@@ -2,17 +2,20 @@ package com.itcotato.naengjango.domain.member.controller;
 
 import com.itcotato.naengjango.domain.member.dto.MyPageDto;
 import com.itcotato.naengjango.domain.member.service.MemberService;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import com.itcotato.naengjango.global.apiPayload.code.GeneralSuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@SecurityRequirement(name = "BearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/mypage")
@@ -27,12 +30,17 @@ public class MyPageController {
 
         Object principal = authentication.getPrincipal();
 
-        // 너희 필터가 principal을 Long으로 넣는 구조라면 여기로 들어옴
+        System.out.println("[MyPageController] principal class = " + principal.getClass().getName());
+
+        // principal이 Member로 들어오는 경우
+        if (principal instanceof Member member) {
+            return member.getId();
+        }
+
         if (principal instanceof Long memberId) {
             return memberId;
         }
 
-        // 혹시 String으로 들어오는 경우도 대비(나중에 구조 바뀌면 바로 터지는 거 방지)
         if (principal instanceof String str) {
             try {
                 return Long.parseLong(str);
@@ -43,6 +51,7 @@ public class MyPageController {
 
         throw new IllegalArgumentException("Unsupported principal type: " + principal.getClass().getName());
     }
+
 
     @Operation(
             summary = "마이페이지 내 정보 조회 API by 이정환 (개발 완료)",
@@ -178,4 +187,46 @@ public class MyPageController {
         Long memberId = getMemberId(authentication);
         return ApiResponse.onSuccess(GeneralSuccessCode.OK, memberService.withdraw(memberId, request));
     }
+
+    // 고정지출 관련
+    @Operation(summary = "마이페이지 고정지출 조회 by 이정환 (개발 완료)", description = "인증된 사용자의 고정지출 목록을 조회합니다.")
+    @GetMapping("/fixed-expenditures")
+    public ApiResponse<MyPageDto.FixedExpendituresResponse> fixedExpenditures(Authentication authentication) {
+        Long memberId = getMemberId(authentication);
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK, memberService.getFixedExpenses(memberId));
+    }
+
+    @Operation(summary = "마이페이지 고정지출 수정 by 이정환 (개발 완료)", description = "인증된 사용자의 고정지출 목록을 전체 교체 방식으로 수정합니다.")
+    @PatchMapping("/fixed-expenditures")
+    public ApiResponse<MyPageDto.FixedExpendituresResponse> updateFixedExpenditures(
+            Authentication authentication,
+            @Valid @RequestBody MyPageDto.UpdateFixedExpendituresRequest request
+    ) {
+        Long memberId = getMemberId(authentication);
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK, memberService.updateFixedExpense(memberId, request));
+    }
+
+    // 비밀번호 변경 관련
+    @Operation(
+            summary = "마이페이지 비밀번호 변경 by 이정환 (개발 완료)",
+            description = "인증된 사용자가 현재 비밀번호 확인 후 새 비밀번호로 변경합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검증 실패)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "현재 비밀번호 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping("/password")
+    public ApiResponse<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody MyPageDto.PasswordChangeRequest request
+    ) {
+        Long memberId = getMemberId(authentication);
+        memberService.changePassword(memberId, request);
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK, null);
+    }
+
+
 }

@@ -158,6 +158,9 @@ public class Member extends BaseEntity {
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 
     // =========================
     // 추가: 탈퇴 관련 메서드
