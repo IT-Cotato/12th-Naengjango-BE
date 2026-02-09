@@ -31,10 +31,10 @@ public class TransactionService {
      * 가계부 내역 저장
      */
 
-    public void saveTransaction(Long memberId, TransactionRequestDTO.CreateDTO request) {
-        // 1. 회원인지 검증
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+    public void saveTransaction(Member member, TransactionRequestDTO.CreateDTO request) {
+        // 1. 회원인지 검증 -> 이제 필요 없음
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         // 2. 유효성 검증
         validateRequest(request);
@@ -81,9 +81,9 @@ public class TransactionService {
      * 날짜별 가계부 내역 조회
      */
     @Transactional(readOnly = true)
-    public List<TransactionResponseDTO.TransactionListDTO> getTransactionsByDate(Long memberId, String date) {
+    public List<TransactionResponseDTO.TransactionListDTO> getTransactionsByDate(Member member, String date) {
         // 1. 조회 권한이 있는지 확인
-        if (memberId == null) {
+        if (member == null) {
             throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
         }
 
@@ -94,7 +94,7 @@ public class TransactionService {
 
             // 3. 로그인된 memberId의 데이터 조회
             List<Transaction> transactions = transactionRepository.findAllByMemberIdAndDateBetween(
-                    memberId, startOfDay, endOfDay);
+                    member.getMemberId(), startOfDay, endOfDay);
 
             // 4. DTO 변환
             return transactions.stream()
@@ -118,13 +118,13 @@ public class TransactionService {
      * 가계부 내역 수정
      */
     @Transactional
-    public void updateTransaction(Long memberId, Long transactionId, TransactionRequestDTO.UpdateDTO request) {
+    public void updateTransaction(Member member, Long transactionId, TransactionRequestDTO.UpdateDTO request) {
         // 1. 수정할 내역 조회
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
 
         // 2. 로그인된 memberId의 데이터인지 확인
-        if (!transaction.getMember().getId().equals(memberId)) {
+        if (!transaction.getMember().getMemberId().equals(member.getMemberId())) {
             throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
         }
 
@@ -155,13 +155,13 @@ public class TransactionService {
      * 가계부 내역 삭제
      */
     @Transactional
-    public void deleteTransaction(Long memberId, Long transactionId) {
+    public void deleteTransaction(Member member, Long transactionId) {
         // 1. 삭제할 내역 조회
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new GeneralException(AccountErrorCode.TRANSACTION_NOT_FOUND));
 
         // 2. 로그인된 memberId의 데이터인지 확인
-        if (!transaction.getMember().getId().equals(memberId)) {
+        if (!transaction.getMember().getMemberId().equals(member.getMemberId())) {
             throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
         }
 

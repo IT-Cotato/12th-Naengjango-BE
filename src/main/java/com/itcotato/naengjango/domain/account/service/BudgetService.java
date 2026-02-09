@@ -25,14 +25,14 @@ public class BudgetService {
     private final TransactionRepository transactionRepository;
     private final MemberRepository memberRepository;
 
-    public BudgetResponseDTO.BudgetStatusDTO getBudgetStatus(Long memberId, int year, int month, int day) {
+    public BudgetResponseDTO.BudgetStatusDTO getBudgetStatus(Member member, int year, int month, int day) {
         // 1. 회원 존재 여부 및 조회 권한 확인
-        if (memberId == null) {
+        if (member == null) {
             throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
         }
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+//        Member member = memberRepository.findById(member)
+//                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         try {
             // 2. 시간 범위 설정
@@ -43,10 +43,10 @@ public class BudgetService {
 
             // 3. 지출액 조회
             // Transaction에서 'EXPENSE'의 합계
-            Long todaySum = transactionRepository.sumExpenseByMemberAndDate(memberId, startOfDay, endOfDay);
+            Long todaySum = transactionRepository.sumExpenseByMemberAndDate(member.getMemberId(), startOfDay, endOfDay);
             long todayExpenditure = (todaySum != null) ? todaySum : 0L;
 
-            Long monthSum = transactionRepository.sumExpenseByMemberAndDate(memberId, startOfMonth, endOfDay);
+            Long monthSum = transactionRepository.sumExpenseByMemberAndDate(member.getMemberId(), startOfMonth, endOfDay);
             long monthExpenditure = (monthSum != null) ? monthSum : 0L;
 
             // 4. 유동적으로 예산 계산
