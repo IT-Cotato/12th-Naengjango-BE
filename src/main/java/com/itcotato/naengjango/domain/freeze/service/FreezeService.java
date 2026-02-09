@@ -327,4 +327,24 @@ public class FreezeService {
         LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
         return (int) (ChronoUnit.DAYS.between(today, lastDay) + 1);
     }
+
+    @Transactional(readOnly = true)
+    public FreezeResponseDto.Detail getFreeze(Member member, Long freezeId) {
+        FreezeItem item = freezeItemRepository.findById(freezeId)
+                .orElseThrow(() -> new FreezeException(FreezeErrorCode.FREEZE_NOT_FOUND));
+
+        if (!item.getMember().getId().equals(member.getId())) {
+            throw new FreezeException(FreezeErrorCode.FREEZE_FORBIDDEN);
+        }
+
+        return new FreezeResponseDto.Detail(
+                item.getId(),
+                item.getAppName(),
+                item.getItemName(),
+                item.getPrice(),
+                item.getFrozenAt(),
+                item.getExpiresAt(),
+                item.getUpdatedAt()
+        );
+    }
 }

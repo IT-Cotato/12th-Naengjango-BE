@@ -72,4 +72,17 @@ public class FreezeResponseDto {
             String itemName,
             int price
     ) {}
+
+    /**
+     * 특정 냉동 품목 상세 조회 응답
+     */
+    public record Detail(
+            Long id,
+            String appName,
+            String itemName,
+            int price,
+            LocalDateTime frozenAt,
+            LocalDateTime expiresAt,
+            LocalDateTime updatedAt
+    ) {}
 }
