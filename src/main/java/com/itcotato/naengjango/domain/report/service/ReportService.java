@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.report.service;
 
+import com.itcotato.naengjango.domain.account.exception.code.AccountErrorCode;
 import com.itcotato.naengjango.domain.account.repository.TransactionRepository;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
@@ -38,14 +39,21 @@ public class ReportService {
     /**
      * 하루 가용 예산 및 파산 시나리오 관련 서비스 코드
      */
-    public ReportResponseDTO.DailyBudgetReportDTO getDailyBudgetReport(Long memberId) {
+    public ReportResponseDTO.DailyBudgetReportDTO getDailyBudgetReport(Member member) {
+
+        // 1. 권한 확인
+        if (member == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
         LocalDate today = LocalDate.now();
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
+        Long memberId = member.getMemberId();
 
         // 1. 회원 정보 조회 및 예산(Budget) 확인
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long monthlyBudget = (member.getBudget() != null) ? member.getBudget().longValue() : 0L;
         if (monthlyBudget == 0) {
@@ -134,9 +142,14 @@ public class ReportService {
      * 냉동 절약 효과(주간/월간) 관련 서비스 코드
      */
 
-    public ReportResponseDTO.SavingsEffectDTO getSavingsEffect(Long memberId, String period) {
+    public ReportResponseDTO.SavingsEffectDTO getSavingsEffect(Member member, String period) {
+        if (member == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
+        Long memberId = member.getMemberId();
 
         // 1. 해당 기간(주/월) 냉동 성공 금액 계산
         LocalDateTime startOfPeriod = period.equals("month") ?

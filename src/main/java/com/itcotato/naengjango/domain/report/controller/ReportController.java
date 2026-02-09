@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.report.controller;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.report.dto.ReportResponseDTO;
 import com.itcotato.naengjango.domain.report.exception.code.ReportSuccessCode;
 import com.itcotato.naengjango.domain.report.service.ReportService;
@@ -49,9 +50,9 @@ public class ReportController {
     })
     @GetMapping("/daily-budget")
     public ApiResponse<ReportResponseDTO.DailyBudgetReportDTO> getDailyBudgetReport(
-            @AuthenticationPrincipal Long memberId) {
+            @AuthenticationPrincipal Member member) {
 
-        ReportResponseDTO.DailyBudgetReportDTO result = reportService.getDailyBudgetReport(memberId);
+        ReportResponseDTO.DailyBudgetReportDTO result = reportService.getDailyBudgetReport(member);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_GET_SUCCESS, result);
     }
 
@@ -89,10 +90,10 @@ public class ReportController {
     })
     @GetMapping("/savings-effect")
     public ApiResponse<ReportResponseDTO.SavingsEffectDTO> getSavingsEffect(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal Member member,
             @RequestParam(name = "period", defaultValue = "week") String period) {
 
-        ReportResponseDTO.SavingsEffectDTO result = reportService.getSavingsEffect(memberId, period);
+        ReportResponseDTO.SavingsEffectDTO result = reportService.getSavingsEffect(member, period);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_GET_SUCCESS, result);
     }
 }
