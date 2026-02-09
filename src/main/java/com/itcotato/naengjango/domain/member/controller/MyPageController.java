@@ -181,11 +181,9 @@ public class MyPageController {
     @Operation(summary = "회원 탈퇴 by 이정환 (개발 완료)", description = "인증된 사용자가 탙퇴 합니다.")
     @PostMapping("/withdrawal")
     public ApiResponse<MyPageDto.WithdrawResponse> withdraw(
-            Authentication authentication,
-            @Valid @RequestBody(required = false) MyPageDto.WithdrawRequest request
-    ) {
+            Authentication authentication) {
         Long memberId = getMemberId(authentication);
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK, memberService.withdraw(memberId, request));
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK, memberService.withdraw(memberId));
     }
 
     // 고정지출 관련

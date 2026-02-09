@@ -316,7 +316,7 @@ public class MemberService {
     }
 
     @Transactional
-    public MyPageDto.WithdrawResponse withdraw(Long memberId, MyPageDto.WithdrawRequest request) {
+    public MyPageDto.WithdrawResponse withdraw(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
@@ -326,9 +326,7 @@ public class MemberService {
                     .message("이미 탈퇴 처리된 계정입니다.")
                     .build();
         }
-
-        String reason = (request == null) ? null : request.reason();
-        member.withdraw(reason);
+        member.withdraw();
 
         // (선택) Redis/JWT 블랙리스트 처리 등 토큰 무효화 정책이 있으면 여기서
         // redisTemplate.opsForValue().set("jwt:blacklist:" + token, "true", ...)
