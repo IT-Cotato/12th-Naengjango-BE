@@ -287,4 +287,34 @@ public class MyPageDto {
         private String message;
     }
 
+    // ===== 고정지출 조회/수정 =====
+    public record FixedExpenditureItem(
+            @jakarta.validation.constraints.NotBlank
+            String item,
+
+            @jakarta.validation.constraints.NotNull
+            @jakarta.validation.constraints.PositiveOrZero
+            Long amount
+    ) {}
+
+    public record UpdateFixedExpendituresRequest(
+            @jakarta.validation.constraints.NotNull
+            java.util.List<FixedExpenditureItem> items
+    ) {}
+
+    @Getter
+    @lombok.Builder
+    public static class FixedExpendituresResponse {
+        private java.util.List<FixedExpenditureItem> items;
+
+    }
+
+    // 비밀번호 변경 관련
+    public record PasswordChangeRequest(
+            @jakarta.validation.constraints.NotBlank String currentPassword,
+            @jakarta.validation.constraints.NotBlank String newPassword,
+            @jakarta.validation.constraints.NotBlank String newPasswordConfirm
+    ) {}
+
+
 }

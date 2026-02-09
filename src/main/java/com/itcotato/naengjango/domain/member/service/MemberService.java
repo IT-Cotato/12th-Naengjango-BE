@@ -316,7 +316,7 @@ public class MemberService {
     }
 
     @Transactional
-    public MyPageDto.WithdrawResponse withdraw(Long memberId, MyPageDto.WithdrawRequest request) {
+    public MyPageDto.WithdrawResponse withdraw(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
@@ -326,9 +326,7 @@ public class MemberService {
                     .message("이미 탈퇴 처리된 계정입니다.")
                     .build();
         }
-
-        String reason = (request == null) ? null : request.reason();
-        member.withdraw(reason);
+        member.withdraw();
 
         // (선택) Redis/JWT 블랙리스트 처리 등 토큰 무효화 정책이 있으면 여기서
         // redisTemplate.opsForValue().set("jwt:blacklist:" + token, "true", ...)
@@ -338,6 +336,73 @@ public class MemberService {
                 .build();
     }
 
+    // 추가
+    // 고정지출 수정
+    @Transactional
+    public MyPageDto.FixedExpendituresResponse updateFixedExpense(Long memberId, MyPageDto.UpdateFixedExpendituresRequest request) {
+        // 멤버 존재 확인
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        // 1) 기존 고정지출 삭제 (전체 교체)
+        fixedExpenditureRepository.deleteByMemberId(memberId);
+
+        // 2) 새 고정지출 저장
+        List<FixedExpenditure> newItems = request.items().stream()
+                .map(dto -> FixedExpenditure.builder()
+                        .item(dto.item())
+                        .amount(dto.amount())
+                        .member(member)
+                        .build())
+                .toList();
+
+        fixedExpenditureRepository.saveAll(newItems);
+
+        // 3) 응답 구성
+        List<MyPageDto.FixedExpenditureItem> responseItems = newItems.stream()
+                .map(e -> new MyPageDto.FixedExpenditureItem(e.getItem(), e.getAmount()))
+                .toList();
+
+        return MyPageDto.FixedExpendituresResponse.builder()
+                .items(responseItems)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public MyPageDto.FixedExpendituresResponse getFixedExpenses(Long memberId) {
+        // 멤버 존재 확인
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        List<MyPageDto.FixedExpenditureItem> items = fixedExpenditureRepository.findByMemberId(memberId).stream()
+                .map(e -> new MyPageDto.FixedExpenditureItem(e.getItem(), e.getAmount()))
+                .toList();
+
+        return MyPageDto.FixedExpendituresResponse.builder()
+                .items(items)
+                .build();
+    }
+
+    // 비밀번호 변경 관련
+    @Transactional
+    public void changePassword(Long memberId, MyPageDto.PasswordChangeRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        // 새 비밀번호 확인 일치
+        if (!request.newPassword().equals(request.newPasswordConfirm())) {
+            throw new IllegalArgumentException("New password confirmation does not match");
+        }
+
+        // 현재 비밀번호 검증
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // 저장 (암호화)
+        String encoded = passwordEncoder.encode(request.newPassword());
+        member.updatePassword(encoded);
+    }
 
 
     private void validateSmsVerification(String phoneNumber) {
