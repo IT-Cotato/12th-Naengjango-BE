@@ -160,4 +160,23 @@ public class FreezeController {
         FreezeResponseDto.BudgetPreview response  = freezeService.budgetPreview(member, request.freezeIds());
         return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_BUDGET_PREVIEW_SUCCESS, response);
     }
+
+    /**
+     * 냉동 상세 조회
+     */
+    @Operation(
+            summary = "냉동 상세 조회 by 임준서 (개발 완료)",
+            description = """
+                    냉동 상세 조회 API 입니다.
+                    - `freezeId`: 조회할 냉동 기록의 ID
+                    - 성공 시 해당 냉동 기록의 상세 정보를 반환합니다.
+                    """)
+    @GetMapping("/{freezeId}")
+    public ApiResponse<FreezeResponseDto.Detail> getFreeze(
+            @AuthenticationPrincipal Member member,
+            @PathVariable Long freezeId
+    ) {
+        FreezeResponseDto.Detail response = freezeService.getFreeze(member, freezeId);
+        return ApiResponse.onSuccess(FreezeSuccessCode.FREEZE_DETAIL_SUCCESS, response);
+    }
 }
