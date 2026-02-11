@@ -103,6 +103,7 @@ public class TransactionService {
             // 4. DTO 변환
             return transactions.stream()
                     .map(t -> TransactionResponseDTO.TransactionListDTO.builder()
+                            .transactionId(t.getId())
                             .type(t.getType().name().equals("INCOME") ? "수입" : "지출")
                             .amount(t.getAmount())
                             .description(t.getDescription())
