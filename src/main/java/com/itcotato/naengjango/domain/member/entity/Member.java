@@ -5,6 +5,8 @@ import com.itcotato.naengjango.domain.member.enums.SocialType;
 import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Member extends BaseEntity {
 
     /** 회원 고유 식별자 */
@@ -69,6 +72,11 @@ public class Member extends BaseEntity {
     /** 회원의 냉동 실패 누적 횟수 */
     @Column(nullable = false)
     private int freezeFailCount = 0;
+
+    /** 계정 생성 시간 **/
+    @Column(nullable = false, updatable = false)
+    @CreatedDate
+    private LocalDateTime createdAt;
 
     // =========================
     // 추가: 회원 탈퇴(소프트 삭제)
