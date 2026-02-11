@@ -31,7 +31,7 @@ public class TransactionService {
      * 가계부 내역 저장
      */
 
-    public void saveTransaction(Member member, TransactionRequestDTO.CreateDTO request) {
+    public TransactionResponseDTO.CreateResultDTO saveTransaction(Member member, TransactionRequestDTO.CreateDTO request) {
         // 1. 회원인지 검증 -> 이제 필요 없음
 //        Member member = memberRepository.findById(memberId)
 //                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -53,7 +53,11 @@ public class TransactionService {
                     .category(request.getCategory())
                     .build();
 
-            transactionRepository.save(transaction);
+            Transaction savedTransaction = transactionRepository.save(transaction);
+
+            return TransactionResponseDTO.CreateResultDTO.builder()
+                    .transactionId(savedTransaction.getId())
+                    .build();
 
         } catch (DateTimeParseException e) {
             // 날짜 형식이 yyyy-MM-dd가 아닐 경우 예외 발생

@@ -105,12 +105,12 @@ public class TransactionController {
                     description = "존재하지 않는 회원"),
     })
     @PostMapping("/transactions")
-    public ApiResponse<Boolean> createTransaction(
+    public ApiResponse<TransactionResponseDTO.CreateResultDTO> createTransaction(
             @AuthenticationPrincipal Member member,
             @RequestBody TransactionRequestDTO.CreateDTO request) {
 
-        transactionService.saveTransaction(member, request);
-        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, true);
+        TransactionResponseDTO.CreateResultDTO result = transactionService.saveTransaction(member, request);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, result);
     }
 
     /**
