@@ -155,7 +155,8 @@ public class MemberService {
                 member.getPhoneNumber(),
                 member.getBudget(),
                 member.getSocialType().name(),
-                member.getRole().name()
+                member.getRole().name(),
+                member.getCreatedAt()
         );
     }
 
@@ -175,10 +176,6 @@ public class MemberService {
         member.updateBudget(req.budget());
         return new MyPageDto.BudgetResponse(member.getBudget());
     }
-
-    // =========================
-    // 추가: 이용약관 / 개인정보 처리 방침
-    // =========================
 
     /**
      * 이용약관 조회 (비로그인 허용 가능)
@@ -218,10 +215,6 @@ public class MemberService {
                 .build();
     }
 
-    // =========================
-    // 추가: FAQ (목록/상세)
-    // =========================
-
     /**
      * FAQ 목록 조회 (비로그인 허용 가능)
      *
@@ -257,10 +250,6 @@ public class MemberService {
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
-
-    // =========================
-    // 추가: 문의하기 (등록/내 문의 목록/내 문의 상세)
-    // =========================
 
     /**
      * 문의 등록 (로그인 사용자)
@@ -336,7 +325,6 @@ public class MemberService {
                 .build();
     }
 
-    // 추가
     // 고정지출 수정
     @Transactional
     public MyPageDto.FixedExpendituresResponse updateFixedExpense(Long memberId, MyPageDto.UpdateFixedExpendituresRequest request) {

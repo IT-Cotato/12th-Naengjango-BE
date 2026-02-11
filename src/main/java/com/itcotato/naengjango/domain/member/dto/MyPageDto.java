@@ -41,8 +41,10 @@ public class MyPageDto {
             String socialType,
 
             @Schema(description = "권한/역할", example = "ROLE_USER")
-            String role
-    ) {}
+            String role,
+
+            @Schema(description = "가입일시", example = "2026-02-01T12:34:56")
+            LocalDateTime createdAt) {}
 
     @Builder
     @Schema(name = "UpdateBudgetRequest", description = "예산 수정 요청 DTO")
