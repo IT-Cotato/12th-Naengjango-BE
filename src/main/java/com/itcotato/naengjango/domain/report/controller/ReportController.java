@@ -30,7 +30,7 @@ public class ReportController {
                     - **todayAvailable**: 오늘 사용할 수 있는 가용 예산입니다.
                     - **diffFromYesterday**: 어제 계산된 가용 예산 대비 오늘의 증감액입니다.
                     - **dailyTrends**: 최근 8일(7일 전~오늘)동안의 일별 가용 예산 변화를 제공합니다.
-                    - **bankruptcyPrediction**: 최근 8일간의 지출 데이터를 기반으로 이번 달 중 언제 예산이 소진될지 예측합니다.
+                    - **bankruptcyPrediction**: 최근 7일간의 지출 데이터를 기반으로 이번 달 중 언제 예산이 소진될지 예측합니다.
                                                  단, 지출 내역이 없을 경우 해당 월의 말일에 파산한다고 가정합니다.
                         """
     )
