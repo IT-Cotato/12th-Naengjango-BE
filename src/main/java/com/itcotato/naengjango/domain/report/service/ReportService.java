@@ -179,6 +179,16 @@ public class ReportService {
         // 지난 기간 대비 차액 (양수면 이번에 더 아낌, 음수면 저번에 더 아낌)
         Long diffFromLastPeriod = totalSavedAmount - lastPeriodSavedAmount;
 
+        // 이번 기간 실패 금액
+        Long totalFailedAmount = freezeItemRepository.sumPriceByMemberAndStatus(memberId, startOfPeriod, now, FreezeStatus.FAILED);
+        if (totalFailedAmount == null) totalFailedAmount = 0L;
+
+        // 지난 기간 실패 금액
+        Long lastPeriodFailedAmount = freezeItemRepository.sumPriceByMemberAndStatus(memberId, startOfLastPeriod, endOfLastPeriod, FreezeStatus.FAILED);
+        lastPeriodFailedAmount = (lastPeriodFailedAmount != null) ? lastPeriodFailedAmount : 0L;
+
+        // 지난 기간 대비 실패 금액 차이
+        Long diffFailedFromLastPeriod = totalFailedAmount - lastPeriodFailedAmount;
 
         // 2. 성공률 추이 계산
         List<ReportResponseDTO.TrendDataDTO> successTrends = period.equals("month") ?
@@ -193,7 +203,9 @@ public class ReportService {
 
         return ReportResponseDTO.SavingsEffectDTO.builder()
                 .totalSavedAmount(totalSavedAmount)
-                .diffFromLastWeek(diffFromLastPeriod)
+                .diffFromLastPeriod(diffFromLastPeriod)
+                .totalFailedAmount(totalFailedAmount)
+                .diffFailedFromLastPeriod(diffFailedFromLastPeriod)
                 .successTrends(successTrends)
                 .successRateByDay(successRateByDay)
                 .bestSavingTime(bestSavingTime)

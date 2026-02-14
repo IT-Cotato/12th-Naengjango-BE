@@ -68,7 +68,9 @@ public class ReportController {
         
         ### 반환 데이터:
         - **totalSavedAmount**: 선택한 기간(이번 주/이번 달) 동안의 총 절약 금액 합계입니다.
-        - **diffFromLastWeek**: 지난 기간 대비 절약 금액의 증감분입니다.
+        - **diffFromLastPeriod**: 지난 기간 대비 절약 금액의 증감분입니다.
+        - **totalFailedAmount**: 선택한 기간 동안 냉동 실패로 인해 놓친 총 금액입니다.
+        - **diffFailedFromLastPeriod**: 지난 기간 대비 실패 금액의 증감분입니다.
         - **successTrends**: 선그래프용 시계열 데이터입니다. ('n주 전' 또는 'n월')
         - **successRateByDay**: 요일별 성공률 히트맵 데이터입니다.
         - **bestSavingTime**: 요일과 시간대를 분석해 가장 높은 절약 성공률을 보인 때를 반환합니다.
