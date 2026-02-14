@@ -51,10 +51,7 @@ public class ReportService {
         LocalDateTime now = LocalDateTime.now();
         Long memberId = member.getMemberId();
 
-        // 1. 회원 정보 조회 및 예산(Budget) 확인
-//        Member member = memberRepository.findById(memberId)
-//                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
-
+        // 1. 예산(Budget) 확인
         Long monthlyBudget = (member.getBudget() != null) ? member.getBudget().longValue() : 0L;
         if (monthlyBudget == 0) {
             throw new GeneralException(ReportErrorCode.BUDGET_NOT_FOUND);
@@ -64,7 +61,7 @@ public class ReportService {
         Long totalSpentValue = transactionRepository.sumExpenseByMemberAndDate(memberId, startOfMonth, now);
         Long totalSpent = (totalSpentValue != null) ? totalSpentValue : 0L;
 
-        // 3. 최근 8일(7일 전~ 오늘) 가용 예산 추이 계산
+        // 3. 최근 7일 가용 예산 추이 계산
         List<ReportResponseDTO.DailyTrendDTO> availableTrends = IntStream.rangeClosed(0, 7)
                 .mapToObj(i -> {
                     LocalDate targetDate = today.minusDays(7 - i);
@@ -86,8 +83,8 @@ public class ReportService {
                 .toList();
 
         // 4. 오늘 가용 예산 및 어제 대비 증감 수치 계산
-        Long todayAvailable = availableTrends.get(7).getAmount(); // 오늘
-        Long yesterdayAvailable = availableTrends.get(6).getAmount(); // 어제
+        Long todayAvailable = availableTrends.get(6).getAmount(); // 오늘
+        Long yesterdayAvailable = availableTrends.get(5).getAmount(); // 어제
         Long diffFromYesterday = todayAvailable - yesterdayAvailable;
 
         // 5. 파산 예측을 위한 지출 데이터 조회
@@ -113,8 +110,8 @@ public class ReportService {
         // 7. 지출 기반 파산 시나리오 예측
         List<ReportResponseDTO.BankruptcyDTO> bankruptcyPrediction = IntStream.range(0, actualExpenses.size())
                 .mapToObj(i -> {
-                    // 해당 시점까지의 지출 평균을 계산
-                    double rollingAvg = actualExpenses.subList(0, i + 1).stream()
+                    // 7일전~1일전 지출 평균을 계산
+                    double rollingAvg = actualExpenses.subList(0, Math.min(i + 1, 7)).stream()
                             .mapToLong(ReportResponseDTO.DailyTrendDTO::getAmount)
                             .average()
                             .orElse(0.0);
@@ -129,7 +126,7 @@ public class ReportService {
                 })
                 .toList();
 
-        // 8. 최종 반환 (diffFromYesterday 포함)
+        // 8. 최종 반환
         return ReportResponseDTO.DailyBudgetReportDTO.builder()
                 .todayAvailable(todayAvailable)
                 .diffFromYesterday(diffFromYesterday)
