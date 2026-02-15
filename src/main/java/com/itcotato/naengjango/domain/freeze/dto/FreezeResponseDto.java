@@ -47,12 +47,14 @@ public class FreezeResponseDto {
     ) {}
 
     /**
-     * 요청 이후 "현재 사용자 상태
+     * 요청 이후 "현재 사용자 상태"
      */
     public record StatusSnapshot(
             int currentSnowballBalance,
             boolean isStreak,
-            int streakDays
+            int streakDays,
+            boolean iglooThresholdReached,
+            boolean iglooCanProtect
     ) {}
 
     /**
@@ -84,5 +86,11 @@ public class FreezeResponseDto {
             LocalDateTime frozenAt,
             LocalDateTime expiresAt,
             LocalDateTime updatedAt
+    ) {}
+
+    public record IglooFailInfo(
+            boolean thresholdReached,
+            boolean canProtect,
+            int currentLevel
     ) {}
 }

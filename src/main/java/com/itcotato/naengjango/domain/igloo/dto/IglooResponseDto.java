@@ -15,4 +15,10 @@ public class IglooResponseDto {
             int snowballBalanceAfter,
             int spentSnowballs
     ) {}
+
+    public record FailCheckResult(
+            boolean thresholdReached,
+            boolean canProtect,
+            int currentLevel
+    ) {}
 }
