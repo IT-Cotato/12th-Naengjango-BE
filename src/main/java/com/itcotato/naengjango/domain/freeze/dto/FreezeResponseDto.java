@@ -23,7 +23,7 @@ public class FreezeResponseDto {
             Long id,
             String appName,
             String itemName,
-            int price,
+            Long price,
             LocalDateTime frozenAt,
             LocalDateTime expiresAt,
             long remainingSeconds
@@ -59,9 +59,9 @@ public class FreezeResponseDto {
      * 예산 미리보기 응답
      */
     public record BudgetPreview(
-            int selectedTotalPrice,
+            Long selectedTotalPrice,
             int remainingDaysInMonth,
-            int perDayBudget
+            Long perDayBudget
     ) {}
 
     /**
@@ -70,7 +70,7 @@ public class FreezeResponseDto {
     public record LinkParse(
             String appName,
             String itemName,
-            int price
+            Long price
     ) {}
 
     /**
@@ -80,7 +80,7 @@ public class FreezeResponseDto {
             Long id,
             String appName,
             String itemName,
-            int price,
+            Long price,
             LocalDateTime frozenAt,
             LocalDateTime expiresAt,
             LocalDateTime updatedAt

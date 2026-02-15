@@ -66,10 +66,12 @@ public class Member extends BaseEntity {
     private Role role;
 
     /** 회원의 현재 이글루 레벨 */
+    @Builder.Default
     @Column(nullable = false)
     private int iglooLevel = 1;
 
     /** 회원의 냉동 실패 누적 횟수 */
+    @Builder.Default
     @Column(nullable = false)
     private int freezeFailCount = 0;
 

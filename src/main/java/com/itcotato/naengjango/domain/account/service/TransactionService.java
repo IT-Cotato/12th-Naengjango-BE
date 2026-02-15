@@ -177,4 +177,25 @@ public class TransactionService {
             throw new GeneralException(AccountErrorCode.TRANSACTION_DELETE_FAILED);
         }
     }
+
+    @Transactional
+    public void createFreezeExpense(Member member, Long amount, String description) {
+
+        if (amount == null || amount <= 0) {
+            throw new GeneralException(AccountErrorCode.INVALID_TRANSACTION_AMOUNT);
+        }
+
+        Transaction transaction = Transaction.builder()
+                .member(member)
+                .type(TransactionType.EXPENSE)
+                .amount(amount)
+                .description(description)
+                .memo("냉동 실패로 인한 소비")
+                .date(LocalDateTime.now())
+                .payment(PaymentMethod.CARD) // 기본값
+                .category("냉동실패")
+                .build();
+
+        transactionRepository.save(transaction);
+    }
 }
