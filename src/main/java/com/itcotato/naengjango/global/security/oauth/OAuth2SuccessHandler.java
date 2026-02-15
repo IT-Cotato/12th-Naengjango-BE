@@ -56,15 +56,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         AuthResponseDto.TokenResponse tokenResponse =
                 authService.issueToken(member);
 
-        ApiResponse<AuthResponseDto.TokenResponse> apiResponse =
-                ApiResponse.onSuccess(
-                        AuthSuccessCode.LOGIN_SUCCESS,
-                        tokenResponse
-                );
+        String accessToken = tokenResponse.accessToken();
+        String refreshToken = tokenResponse.refreshToken();
 
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(
-                objectMapper.writeValueAsString(apiResponse)
-        );
+        // 프론트 리다이렉트 주소
+        String redirectUrl = "https://12th-naengjango-fe.vercel.app/home"
+                + "?accessToken=" + accessToken
+                + "&refreshToken=" + refreshToken;
+
+        response.sendRedirect(redirectUrl);
     }
 }
