@@ -65,11 +65,9 @@ public class IglooController {
     public ApiResponse<IglooResponseDto.Status> downgrade(
             @AuthenticationPrincipal Member member
     ) {
-        iglooService.downgrade(member);
-
-        // 하락 후 최신 상태 반환
-        return ApiResponse.onSuccess(IglooSuccessCode.IGLOO_DOWNGRADE_SUCCESS,
-                iglooService.getStatus(member)
+        return ApiResponse.onSuccess(
+                IglooSuccessCode.IGLOO_DOWNGRADE_SUCCESS,
+                iglooService.downgrade(member)
         );
     }
 }

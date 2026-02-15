@@ -117,24 +117,24 @@ public class IglooService {
      * - 실패 누적 카운트 초기화
      */
     @Transactional
-    public int downgrade(Member member) {
+    public IglooResponseDto.Status downgrade(Member member) {
 
         Member m = memberRepository.findById(member.getId()).orElseThrow();
-
-        // 실패 횟수 5회 미만 예외처리
-        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
-            throw new IglooException(IglooErrorCode.NOT_REACHED_THRESHOLD);
-        }
 
         // 이미 레벨 1인 경우 예외처리
         if (m.getIglooLevel() <= 1) {
             throw new IglooException(IglooErrorCode.IGLOO_LEVEL_MIN);
         }
-        
-            m.downIglooLevel();
-            m.resetFreezeFailCount();
 
-            return m.getIglooLevel();
+        m.downIglooLevel();
+        m.resetFreezeFailCount();
+
+        return new IglooResponseDto.Status(
+                m.getIglooLevel(),
+                snowballService.getBalance(m),
+                requiredForNext(m.getIglooLevel()),
+                m.getFreezeFailCount()
+        );
     }
 
     private int upgradeCost(int nextLevel) {
