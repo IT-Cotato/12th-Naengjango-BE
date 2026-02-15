@@ -72,36 +72,69 @@ public class IglooService {
     }
 
     /**
-     * 실패 누적 반영 + 임계 도달 시 하락/방어 처리
-     * - 방어 가능(눈덩이 8개 이상) → 8개 소비 후 방어
-     * - 불가능 → 단계 하락(최소 1)
-     * - 처리 후 실패 누적 카운트는 0으로 초기화
+     * 실패 누적 체크: 실패 누적 delta만큼 더한 후 임계 도달 여부 체크
+     * - 임계 도달 안함: 실패 누적 업데이트 후 false 반환
+     * - 임계 도달: 눈덩이 잔액 체크 후 방어 가능 여부 반환 (방어 시 실패 누적 초기화)
+     * - 하락 확정은 여기서 하지 않음(별도 downgrade() 호출로 처리)
      */
     @Transactional
-    public void applyFailures(Member member, int failDelta) {
-        if (failDelta <= 0) return;
+    public IglooResponseDto.FailCheckResult checkFailures(Member member, int failDelta) {
+
+        if (failDelta <= 0) {
+            return new IglooResponseDto.FailCheckResult(false, false, member.getIglooLevel());
+        }
 
         Member m = memberRepository.findById(member.getId()).orElseThrow();
 
         m.addFreezeFailCount(failDelta);
 
         if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
-            return;
+            return new IglooResponseDto.FailCheckResult(false, false, m.getIglooLevel());
         }
 
-        // 임계 도달: 방어 가능 여부
         int balance = snowballService.getBalance(m);
 
         if (balance >= DOWNGRADE_PROTECT_COST) {
-            // 방어: 눈덩이 8개 소비
-            snowballService.spend(m, DOWNGRADE_PROTECT_COST, SnowballService.REASON_IGLOO_DOWN_PROTECT);
+            // 방어 가능하면 눈덩이 소비 후 방어
+            snowballService.spend(
+                    m,
+                    DOWNGRADE_PROTECT_COST,
+                    SnowballService.REASON_IGLOO_DOWN_PROTECT
+            );
+
             m.resetFreezeFailCount();
-            return;
+
+            return new IglooResponseDto.FailCheckResult(true, true, m.getIglooLevel());
         }
 
-        // 방어 불가: 단계 하락
-        m.downIglooLevel();
-        m.resetFreezeFailCount();
+        // 하락은 여기서 하지 않음
+        return new IglooResponseDto.FailCheckResult(true, false, m.getIglooLevel());
+    }
+
+    /**
+     * 하락 확정: 실패 누적 임계 도달 상태에서 별도 호출됨
+     * - 하락 처리(최소 1)
+     * - 실패 누적 카운트 초기화
+     */
+    @Transactional
+    public int downgrade(Member member) {
+
+        Member m = memberRepository.findById(member.getId()).orElseThrow();
+
+        // 실패 횟수 5회 미만 예외처리
+        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
+            throw new IglooException(IglooErrorCode.NOT_REACHED_THRESHOLD);
+        }
+
+        // 이미 레벨 1인 경우 예외처리
+        if (m.getIglooLevel() <= 1) {
+            throw new IglooException(IglooErrorCode.IGLOO_LEVEL_MIN);
+        }
+        
+            m.downIglooLevel();
+            m.resetFreezeFailCount();
+
+            return m.getIglooLevel();
     }
 
     private int upgradeCost(int nextLevel) {

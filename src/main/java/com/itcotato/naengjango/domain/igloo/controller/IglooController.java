@@ -50,4 +50,26 @@ public class IglooController {
     public ApiResponse<IglooResponseDto.UpgradeResult> upgrade(@AuthenticationPrincipal Member member) {
         return ApiResponse.onSuccess(IglooSuccessCode.IGLOO_UPGRADE_SUCCESS, iglooService.upgrade(member));
     }
+
+    /**
+     * 이글루 단계 하락 (프론트 confirm 이후 호출)
+     */
+    @Operation(
+            summary = "이글루 다운그레이드 by 임준서 (개발 완료)",
+            description = """
+                    이글루 다운그레이드 API 입니다.
+                    - 이글루 단계 하락에 필요한 눈덩이를 소비하고, 이글루 단계를 하락시킵니다.
+                    - 하락 후의 이글루 단계와 남은 눈덩이 개수를 반환합니다.
+                    """)
+    @PostMapping("/downgrade")
+    public ApiResponse<IglooResponseDto.Status> downgrade(
+            @AuthenticationPrincipal Member member
+    ) {
+        iglooService.downgrade(member);
+
+        // 하락 후 최신 상태 반환
+        return ApiResponse.onSuccess(IglooSuccessCode.IGLOO_DOWNGRADE_SUCCESS,
+                iglooService.getStatus(member)
+        );
+    }
 }

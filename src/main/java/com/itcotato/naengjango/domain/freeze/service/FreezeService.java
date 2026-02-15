@@ -8,8 +8,8 @@ import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import com.itcotato.naengjango.domain.freeze.exception.FreezeException;
 import com.itcotato.naengjango.domain.freeze.exception.code.FreezeErrorCode;
 import com.itcotato.naengjango.domain.freeze.repository.FreezeItemRepository;
+import com.itcotato.naengjango.domain.igloo.dto.IglooResponseDto;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import com.itcotato.naengjango.domain.snowball.repository.SnowballLedgerRepository;
 import com.itcotato.naengjango.domain.igloo.service.IglooService;
 import com.itcotato.naengjango.domain.snowball.service.SnowballService;
 import lombok.RequiredArgsConstructor;
@@ -162,11 +162,24 @@ public class FreezeService {
         }
 
         // 실패 누적 반영 + 하락/방어 처리
-        iglooService.applyFailures(member, failCount);
+        IglooResponseDto.FailCheckResult result =
+                iglooService.checkFailures(member, failCount);
+
+
+        int currentBalance = snowballService.getBalance(member);
+
+        FreezeResponseDto.StatusSnapshot snapshot =
+                new FreezeResponseDto.StatusSnapshot(
+                        currentBalance,
+                        false,
+                        0,
+                        result.thresholdReached(),
+                        result.canProtect()
+                );
 
         return new FreezeResponseDto.BulkAction(
                 new FreezeResponseDto.ActionResult(failCount, 0),
-                null
+                snapshot
         );
     }
 
@@ -222,7 +235,9 @@ public class FreezeService {
                 new FreezeResponseDto.StatusSnapshot(
                         balance,
                         streakDays > 0,
-                        streakDays
+                        streakDays,
+                        false,
+                        false
                 )
         );
     }
