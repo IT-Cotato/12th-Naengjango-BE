@@ -88,6 +88,7 @@ public class AuthService {
     }
 
     /** 토큰 재발급 (Access Token 재발급) */
+    @Transactional
     public AuthResponseDto.TokenResponse refresh(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new AuthException(MemberErrorCode.MEMBER_NOT_FOUND));
