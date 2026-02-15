@@ -46,7 +46,7 @@ public class FreezeItem extends BaseEntity {
      * 가격
      */
     @Column(nullable = false)
-    private int price;
+    private Long price;
 
     /**
      * 냉동 상태
@@ -79,7 +79,7 @@ public class FreezeItem extends BaseEntity {
     private boolean notified;
 
     /** 생성 메서드 */
-    public static FreezeItem create(Member member, String appName, String itemName, int price) {
+    public static FreezeItem create(Member member, String appName, String itemName, Long price) {
         LocalDateTime now = LocalDateTime.now();
         FreezeItem item = new FreezeItem();
         item.member = member;
@@ -95,7 +95,7 @@ public class FreezeItem extends BaseEntity {
     }
 
     /** 냉동 항목 수정 */
-    public void update(String appName, String itemName, int price) {
+    public void update(String appName, String itemName, Long price) {
         this.appName = appName;
         this.itemName = itemName;
         this.price = price;

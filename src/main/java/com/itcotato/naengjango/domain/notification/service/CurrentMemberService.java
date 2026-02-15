@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.notification.service;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -8,17 +9,31 @@ import org.springframework.stereotype.Service;
 public class CurrentMemberService {
 
     public Long getCurrentMemberId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getPrincipal() == null) {
-            throw new IllegalStateException("Unauthenticated");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalArgumentException("Unauthenticated request");
         }
 
-        // TODO: 프로젝트의 Principal 타입에 맞게 수정
-        // 예: CustomUserDetails라면 ((CustomUserDetails) auth.getPrincipal()).getMemberId()
-        if (auth.getPrincipal() instanceof Long memberId) {
+        Object principal = authentication.getPrincipal();
+
+        // principal이 Member로 들어오는 경우
+        if (principal instanceof Member member) {
+            return member.getId();
+        }
+
+        if (principal instanceof Long memberId) {
             return memberId;
         }
 
-        throw new IllegalStateException("Unsupported principal type: " + auth.getPrincipal().getClass());
+        if (principal instanceof String str) {
+            try {
+                return Long.parseLong(str);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid principal type: " + principal);
+            }
+        }
+
+        throw new IllegalArgumentException("Unsupported principal type: " + principal.getClass().getName());
     }
 }

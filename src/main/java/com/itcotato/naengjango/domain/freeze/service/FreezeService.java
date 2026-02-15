@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.freeze.service;
 
+import com.itcotato.naengjango.domain.account.service.TransactionService;
 import com.itcotato.naengjango.domain.freeze.dto.FreezeRequestDto;
 import com.itcotato.naengjango.domain.freeze.dto.FreezeResponseDto;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
@@ -27,7 +28,7 @@ import java.util.List;
 public class FreezeService {
 
     private final FreezeItemRepository freezeItemRepository;
-    private final SnowballLedgerRepository snowballLedgerRepository;
+    private final TransactionService transactionService;
     private final SnowballService snowballService;
     private final IglooService iglooService;
 
@@ -68,7 +69,7 @@ public class FreezeService {
                 freezeItemRepository.findByMemberAndStatus(member, FreezeStatus.FROZEN);
 
         if ("price".equalsIgnoreCase(sort)) {
-            items.sort((a, b) -> Integer.compare(b.getPrice(), a.getPrice()));
+            items.sort((a, b) -> Long.compare(b.getPrice(), a.getPrice()));
         } else {
             items.sort((a, b) -> b.getFrozenAt().compareTo(a.getFrozenAt()));
         }
@@ -149,6 +150,14 @@ public class FreezeService {
                 throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_STATUS);
             }
             item.markFailed();
+
+            // 실패 처리 시 해당 항목 가격만큼 지출 기록 생성
+            transactionService.createFreezeExpense(
+                    member,
+                    item.getPrice(),
+                    item.getItemName()
+            );
+
             failCount++;
         }
 
@@ -228,12 +237,12 @@ public class FreezeService {
     ) {
         List<FreezeItem> items = findOwnedFreezes(freezeIds, member);
 
-        int totalPrice = items.stream()
-                .mapToInt(FreezeItem::getPrice)
+        Long totalPrice = items.stream()
+                .mapToLong(FreezeItem::getPrice)
                 .sum();
 
         int remainingDays = remainingDaysInMonthInclusive(LocalDate.now());
-        int perDayBudget = remainingDays <= 0
+        Long perDayBudget = remainingDays <= 0
                 ? totalPrice
                 : totalPrice / remainingDays;
 
@@ -326,5 +335,25 @@ public class FreezeService {
     private int remainingDaysInMonthInclusive(LocalDate today) {
         LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
         return (int) (ChronoUnit.DAYS.between(today, lastDay) + 1);
+    }
+
+    @Transactional(readOnly = true)
+    public FreezeResponseDto.Detail getFreeze(Member member, Long freezeId) {
+        FreezeItem item = freezeItemRepository.findById(freezeId)
+                .orElseThrow(() -> new FreezeException(FreezeErrorCode.FREEZE_NOT_FOUND));
+
+        if (!item.getMember().getId().equals(member.getId())) {
+            throw new FreezeException(FreezeErrorCode.FREEZE_FORBIDDEN);
+        }
+
+        return new FreezeResponseDto.Detail(
+                item.getId(),
+                item.getAppName(),
+                item.getItemName(),
+                item.getPrice(),
+                item.getFrozenAt(),
+                item.getExpiresAt(),
+                item.getUpdatedAt()
+        );
     }
 }

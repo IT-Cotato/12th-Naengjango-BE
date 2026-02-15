@@ -5,6 +5,8 @@ import com.itcotato.naengjango.domain.member.enums.SocialType;
 import com.itcotato.naengjango.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Member extends BaseEntity {
 
     /** 회원 고유 식별자 */
@@ -63,12 +66,19 @@ public class Member extends BaseEntity {
     private Role role;
 
     /** 회원의 현재 이글루 레벨 */
+    @Builder.Default
     @Column(nullable = false)
     private int iglooLevel = 1;
 
     /** 회원의 냉동 실패 누적 횟수 */
+    @Builder.Default
     @Column(nullable = false)
     private int freezeFailCount = 0;
+
+    /** 계정 생성 시간 **/
+    @Column(nullable = false, updatable = false)
+    @CreatedDate
+    private LocalDateTime createdAt;
 
     // =========================
     // 추가: 회원 탈퇴(소프트 삭제)
@@ -81,13 +91,6 @@ public class Member extends BaseEntity {
      */
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    /**
-     * 탈퇴 사유(선택)
-     * - 운영/분석 목적. 원치 않으면 제거 가능
-     */
-    @Column(name = "withdraw_reason", length = 500)
-    private String withdrawReason;
 
     /** 회원 생성 시 기본 권한 설정 */
     @PrePersist
@@ -158,6 +161,9 @@ public class Member extends BaseEntity {
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 
     // =========================
     // 추가: 탈퇴 관련 메서드
@@ -176,12 +182,10 @@ public class Member extends BaseEntity {
      * - withdrawReason 저장(옵션)
      * - 개인정보 익명화(마스킹)
      */
-    public void withdraw(String reason) {
+    public void withdraw() {
         if (this.deletedAt != null) return; // 멱등 처리(이미 탈퇴면 다시 처리하지 않음)
 
         this.deletedAt = LocalDateTime.now();
-        this.withdrawReason = reason;
-
         anonymizePersonalInfo();
     }
 

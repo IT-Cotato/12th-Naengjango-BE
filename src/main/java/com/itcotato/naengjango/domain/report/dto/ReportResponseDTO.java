@@ -84,7 +84,14 @@ public class ReportResponseDTO {
         private Long totalSavedAmount;
 
         @Schema(description = "저번 주 대비 추가 절약 금액 (양수면 더 아낌, 음수면 덜 아낌)", example = "5000")
-        private Long diffFromLastWeek;
+//        private Long diffFromLastWeek;
+        private Long diffFromLastPeriod;
+
+        @Schema(description = "이번 주/달 냉동 실패로 놓친 총 금액", example = "12000")
+        private Long totalFailedAmount;
+
+        @Schema(description = "저번 기간 대비 실패 금액 증감 (양수면 더 낭비함, 음수면 덜 낭비함)", example = "-2000")
+        private Long diffFailedFromLastPeriod;
 
         @Schema(description = "성공률 추이 리스트", example = "[{\"label\": \"1주 전\", \"successRate\": 0.75}]")
         private List<TrendDataDTO> successTrends;

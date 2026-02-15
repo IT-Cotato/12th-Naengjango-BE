@@ -41,8 +41,10 @@ public class MyPageDto {
             String socialType,
 
             @Schema(description = "권한/역할", example = "ROLE_USER")
-            String role
-    ) {}
+            String role,
+
+            @Schema(description = "가입일시", example = "2026-02-01T12:34:56")
+            LocalDateTime createdAt) {}
 
     @Builder
     @Schema(name = "UpdateBudgetRequest", description = "예산 수정 요청 DTO")
@@ -286,5 +288,35 @@ public class MyPageDto {
         @Schema(description = "처리 메시지", example = "탈퇴 처리 완료")
         private String message;
     }
+
+    // ===== 고정지출 조회/수정 =====
+    public record FixedExpenditureItem(
+            @jakarta.validation.constraints.NotBlank
+            String item,
+
+            @jakarta.validation.constraints.NotNull
+            @jakarta.validation.constraints.PositiveOrZero
+            Long amount
+    ) {}
+
+    public record UpdateFixedExpendituresRequest(
+            @jakarta.validation.constraints.NotNull
+            java.util.List<FixedExpenditureItem> items
+    ) {}
+
+    @Getter
+    @lombok.Builder
+    public static class FixedExpendituresResponse {
+        private java.util.List<FixedExpenditureItem> items;
+
+    }
+
+    // 비밀번호 변경 관련
+    public record PasswordChangeRequest(
+            @jakarta.validation.constraints.NotBlank String currentPassword,
+            @jakarta.validation.constraints.NotBlank String newPassword,
+            @jakarta.validation.constraints.NotBlank String newPasswordConfirm
+    ) {}
+
 
 }

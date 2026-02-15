@@ -5,8 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface FixedExpenditureRepository extends JpaRepository<FixedExpenditure, Long> {
     // 고정 지출 총합을 구하는 쿼리
     @Query("SELECT SUM(f.amount) FROM FixedExpenditure f WHERE f.member.id = :memberId")
     Long sumAmountByMember(@Param("memberId") Long memberId);
+
+    void deleteByMemberId(Long memberId);
+    List<FixedExpenditure> findByMemberId(Long memberId);
+
 }

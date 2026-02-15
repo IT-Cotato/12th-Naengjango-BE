@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.report.service;
 
+import com.itcotato.naengjango.domain.account.exception.code.AccountErrorCode;
 import com.itcotato.naengjango.domain.account.repository.TransactionRepository;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
@@ -38,15 +39,19 @@ public class ReportService {
     /**
      * 하루 가용 예산 및 파산 시나리오 관련 서비스 코드
      */
-    public ReportResponseDTO.DailyBudgetReportDTO getDailyBudgetReport(Long memberId) {
+    public ReportResponseDTO.DailyBudgetReportDTO getDailyBudgetReport(Member member) {
+
+        // 1. 권한 확인
+        if (member == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
         LocalDate today = LocalDate.now();
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime now = LocalDateTime.now();
+        Long memberId = member.getMemberId();
 
-        // 1. 회원 정보 조회 및 예산(Budget) 확인
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
-
+        // 1. 예산(Budget) 확인
         Long monthlyBudget = (member.getBudget() != null) ? member.getBudget().longValue() : 0L;
         if (monthlyBudget == 0) {
             throw new GeneralException(ReportErrorCode.BUDGET_NOT_FOUND);
@@ -56,7 +61,7 @@ public class ReportService {
         Long totalSpentValue = transactionRepository.sumExpenseByMemberAndDate(memberId, startOfMonth, now);
         Long totalSpent = (totalSpentValue != null) ? totalSpentValue : 0L;
 
-        // 3. 최근 8일(7일 전~ 오늘) 가용 예산 추이 계산
+        // 3. 최근 7일 가용 예산 추이 계산
         List<ReportResponseDTO.DailyTrendDTO> availableTrends = IntStream.rangeClosed(0, 7)
                 .mapToObj(i -> {
                     LocalDate targetDate = today.minusDays(7 - i);
@@ -78,8 +83,8 @@ public class ReportService {
                 .toList();
 
         // 4. 오늘 가용 예산 및 어제 대비 증감 수치 계산
-        Long todayAvailable = availableTrends.get(7).getAmount(); // 오늘
-        Long yesterdayAvailable = availableTrends.get(6).getAmount(); // 어제
+        Long todayAvailable = availableTrends.get(6).getAmount(); // 오늘
+        Long yesterdayAvailable = availableTrends.get(5).getAmount(); // 어제
         Long diffFromYesterday = todayAvailable - yesterdayAvailable;
 
         // 5. 파산 예측을 위한 지출 데이터 조회
@@ -105,8 +110,8 @@ public class ReportService {
         // 7. 지출 기반 파산 시나리오 예측
         List<ReportResponseDTO.BankruptcyDTO> bankruptcyPrediction = IntStream.range(0, actualExpenses.size())
                 .mapToObj(i -> {
-                    // 해당 시점까지의 지출 평균을 계산
-                    double rollingAvg = actualExpenses.subList(0, i + 1).stream()
+                    // 7일전~1일전 지출 평균을 계산
+                    double rollingAvg = actualExpenses.subList(0, Math.min(i + 1, 7)).stream()
                             .mapToLong(ReportResponseDTO.DailyTrendDTO::getAmount)
                             .average()
                             .orElse(0.0);
@@ -121,7 +126,7 @@ public class ReportService {
                 })
                 .toList();
 
-        // 8. 최종 반환 (diffFromYesterday 포함)
+        // 8. 최종 반환
         return ReportResponseDTO.DailyBudgetReportDTO.builder()
                 .todayAvailable(todayAvailable)
                 .diffFromYesterday(diffFromYesterday)
@@ -134,9 +139,14 @@ public class ReportService {
      * 냉동 절약 효과(주간/월간) 관련 서비스 코드
      */
 
-    public ReportResponseDTO.SavingsEffectDTO getSavingsEffect(Long memberId, String period) {
+    public ReportResponseDTO.SavingsEffectDTO getSavingsEffect(Member member, String period) {
+        if (member == null) {
+            throw new GeneralException(AccountErrorCode.ACCOUNT_FORBIDDEN);
+        }
+
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
+        Long memberId = member.getMemberId();
 
         // 1. 해당 기간(주/월) 냉동 성공 금액 계산
         LocalDateTime startOfPeriod = period.equals("month") ?
@@ -166,6 +176,16 @@ public class ReportService {
         // 지난 기간 대비 차액 (양수면 이번에 더 아낌, 음수면 저번에 더 아낌)
         Long diffFromLastPeriod = totalSavedAmount - lastPeriodSavedAmount;
 
+        // 이번 기간 실패 금액
+        Long totalFailedAmount = freezeItemRepository.sumPriceByMemberAndStatus(memberId, startOfPeriod, now, FreezeStatus.FAILED);
+        if (totalFailedAmount == null) totalFailedAmount = 0L;
+
+        // 지난 기간 실패 금액
+        Long lastPeriodFailedAmount = freezeItemRepository.sumPriceByMemberAndStatus(memberId, startOfLastPeriod, endOfLastPeriod, FreezeStatus.FAILED);
+        lastPeriodFailedAmount = (lastPeriodFailedAmount != null) ? lastPeriodFailedAmount : 0L;
+
+        // 지난 기간 대비 실패 금액 차이
+        Long diffFailedFromLastPeriod = totalFailedAmount - lastPeriodFailedAmount;
 
         // 2. 성공률 추이 계산
         List<ReportResponseDTO.TrendDataDTO> successTrends = period.equals("month") ?
@@ -180,7 +200,9 @@ public class ReportService {
 
         return ReportResponseDTO.SavingsEffectDTO.builder()
                 .totalSavedAmount(totalSavedAmount)
-                .diffFromLastWeek(diffFromLastPeriod)
+                .diffFromLastPeriod(diffFromLastPeriod)
+                .totalFailedAmount(totalFailedAmount)
+                .diffFailedFromLastPeriod(diffFailedFromLastPeriod)
                 .successTrends(successTrends)
                 .successRateByDay(successRateByDay)
                 .bestSavingTime(bestSavingTime)

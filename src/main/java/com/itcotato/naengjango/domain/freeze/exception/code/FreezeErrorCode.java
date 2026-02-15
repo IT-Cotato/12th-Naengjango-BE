@@ -48,8 +48,12 @@ public enum FreezeErrorCode implements BaseErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "FREEZE500_1",
             "예기치 않은 서버 에러가 발생했습니다."
-    )
-    ;
+    ),
+    FREEZE_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FREEZE403_1",
+            "냉동 작업에 대한 권한이 없습니다."
+            );
     private final HttpStatus status;
     private final String code;
     private final String message;
