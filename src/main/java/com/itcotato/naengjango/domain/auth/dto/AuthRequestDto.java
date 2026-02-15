@@ -19,4 +19,8 @@ public class AuthRequestDto {
             String phoneNumber,
             String loginId
     ) {}
+
+    public record RefreshTokenRequest(
+            @NotBlank String refreshToken
+    ) {}
 }

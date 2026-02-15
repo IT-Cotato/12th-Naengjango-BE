@@ -55,6 +55,7 @@ public class JwtProvider {
         Instant expiry = now.plusSeconds(expireSeconds);
 
         return Jwts.builder()
+                .setSubject(String.valueOf(claims.memberId()))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .claim(CLAIM_MEMBER_ID, claims.memberId())

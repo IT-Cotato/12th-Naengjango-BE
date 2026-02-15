@@ -1,6 +1,8 @@
 package com.itcotato.naengjango.domain.auth.controller;
 
 import com.itcotato.naengjango.domain.auth.dto.*;
+import com.itcotato.naengjango.domain.auth.exception.AuthException;
+import com.itcotato.naengjango.domain.auth.exception.code.AuthErrorCode;
 import com.itcotato.naengjango.domain.auth.exception.code.AuthSuccessCode;
 import com.itcotato.naengjango.domain.auth.service.AuthService;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
@@ -60,25 +62,24 @@ public class AuthController {
                     """)
     @PostMapping("/refresh")
     public ApiResponse<AuthResponseDto.TokenResponse> refresh(
-            @RequestHeader("Authorization") String authorization
+            @Valid @RequestBody AuthRequestDto.RefreshTokenRequest request
     ) {
-        // 1. Bearer 토큰 파싱
-        String refreshToken = authorization.replace("Bearer ", "");
 
-        // 2. refreshToken 검증 + claims 추출
+        String refreshToken = request.refreshToken();
+
+        // refresh token 검증
         JwtClaims claims = jwtProvider.validateAndExtractClaims(refreshToken);
         Long memberId = claims.memberId();
 
-        // 3. Redis에 저장된 토큰과 비교
-        String savedToken =
-                refreshTokenRedisRepository.findByMemberId(memberId)
-                        .orElseThrow(() -> new IllegalArgumentException("로그아웃된 토큰"));
+        // Redis에 저장된 토큰과 비교
+        String savedToken = refreshTokenRedisRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.REISSUE_INVALID_REFRESH_TOKEN));
 
         if (!savedToken.equals(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 refresh token");
+            throw new AuthException(AuthErrorCode.REISSUE_INVALID_REFRESH_TOKEN);
         }
 
-        // 4. 토큰 재발급 (공통 로직)
+        // 새 토큰 발급
         AuthResponseDto.TokenResponse tokenResponse =
                 authService.refresh(memberId);
 
