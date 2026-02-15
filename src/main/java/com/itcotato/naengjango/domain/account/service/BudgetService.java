@@ -5,6 +5,7 @@ import com.itcotato.naengjango.domain.account.exception.code.AccountErrorCode;
 import com.itcotato.naengjango.domain.account.repository.TransactionRepository;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
+import com.itcotato.naengjango.domain.member.repository.FixedExpenditureRepository;
 import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import com.itcotato.naengjango.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 public class BudgetService {
     private final TransactionRepository transactionRepository;
     private final MemberRepository memberRepository;
+    private final FixedExpenditureRepository fixedExpenditureRepository;
 
     public BudgetResponseDTO.BudgetStatusDTO getBudgetStatus(Member member, int year, int month, int day) {
         // 1. 회원 존재 여부 및 조회 권한 확인
@@ -49,15 +51,21 @@ public class BudgetService {
             Long monthSum = transactionRepository.sumExpenseByMemberAndDate(member.getMemberId(), startOfMonth, endOfDay);
             long monthExpenditure = (monthSum != null) ? monthSum : 0L;
 
-            // 4. 유동적으로 예산 계산
+            // 4. 고정 지출 합계 조회 (추가)
+            Long fixedSum = fixedExpenditureRepository.sumAmountByMember(member.getMemberId());
+            long totalFixedExpenditure = (fixedSum != null) ? fixedSum : 0L;
+
+            // 5. 유동적으로 예산 계산
             int totalBudget = (member.getBudget() != null) ? member.getBudget() : 0;
+            long netBudget = totalBudget - totalFixedExpenditure;
             int daysInMonth = targetDate.lengthOfMonth();
             int remainingDays = daysInMonth - targetDate.getDayOfMonth() + 1; // 오늘 포함 남은 일수
 
             // 어제까지의 누적 지출액 계산
+//            long expenditureBeforeToday = monthExpenditure - todayExpenditure;
             long expenditureBeforeToday = monthExpenditure - todayExpenditure;
             // 남은 한 달 예산
-            long remainingBudgetForMonth = totalBudget - expenditureBeforeToday;
+            long remainingBudgetForMonth = netBudget - expenditureBeforeToday;
 
             // 오늘 권장 예산 = (남은 한달 예산 / 오늘 포함 남은 일수)
             int dynamicDailyBudget = (remainingBudgetForMonth > 0)
@@ -68,7 +76,7 @@ public class BudgetService {
             int todayRemaining = Math.max(0, dynamicDailyBudget - (int) todayExpenditure);
 
             // 6. 이번 달 남은 예산 계산 (소진 시 0원)
-            int monthRemaining = Math.max(0, totalBudget - (int) monthExpenditure);
+            int monthRemaining = Math.max(0, (int) (netBudget - monthExpenditure));
 
             return BudgetResponseDTO.BudgetStatusDTO.builder()
                     .todayRemaining(todayRemaining)
