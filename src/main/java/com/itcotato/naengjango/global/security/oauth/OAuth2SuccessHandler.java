@@ -25,7 +25,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final MemberRepository memberRepository;
     private final AuthService authService;
 
-    @Value("${app.front-url:https://12th-naengjango-fe.vercel.app}")
+    @Value("${app.front-url}")
     private String frontUrl;
 
 
@@ -63,6 +63,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 authService.issueToken(member);
 
         boolean signupCompleted = member.getPhoneNumber() != null;
+
+        System.out.println("frontUrl = " + frontUrl);
 
         // 4. 프론트로 redirect
         String targetUrl = UriComponentsBuilder
