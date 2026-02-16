@@ -26,14 +26,8 @@ public class IglooService {
 
     @Transactional(readOnly = true)
     public IglooResponseDto.Status getStatus(Member member) {
-        int balance = snowballService.getBalance(member);
-        Integer required = requiredForNext(member.getIglooLevel());
-        return new IglooResponseDto.Status(
-                member.getIglooLevel(),
-                balance,
-                required,
-                member.getFreezeFailCount()
-        );
+
+        return buildStatus(member);
     }
 
     /**
@@ -93,23 +87,43 @@ public class IglooService {
         }
 
         int balance = snowballService.getBalance(m);
+        boolean canProtect = balance >= DOWNGRADE_PROTECT_COST;
 
-        if (balance >= DOWNGRADE_PROTECT_COST) {
-            // 방어 가능하면 눈덩이 소비 후 방어
-            snowballService.spend(
-                    m,
-                    DOWNGRADE_PROTECT_COST,
-                    SnowballService.REASON_IGLOO_DOWN_PROTECT
-            );
+        return new IglooResponseDto.FailCheckResult(true, canProtect, m.getIglooLevel());
+    }
 
-            m.resetFreezeFailCount();
+    /**
+     * 하락 방어: 실패 누적 임계 도달 상태에서 별도 호출됨
+     * - 눈덩이 소비(확정: 8개)
+     * - 실패 누적 카운트 초기화
+     * - 이글루 단계 유지
+     */
+    @Transactional
+    public IglooResponseDto.Status protect(Member member) {
 
-            return new IglooResponseDto.FailCheckResult(true, true, m.getIglooLevel());
+        Member m = memberRepository.findById(member.getId()).orElseThrow();
+
+        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
+            throw new IglooException(IglooErrorCode.INVALID_PROTECT_REQUEST);
         }
 
-        // 하락은 여기서 하지 않음
-        return new IglooResponseDto.FailCheckResult(true, false, m.getIglooLevel());
+        int balance = snowballService.getBalance(m);
+
+        if (balance < DOWNGRADE_PROTECT_COST) {
+            throw new IglooException(IglooErrorCode.SNOWBALL_INSUFFICIENT);
+        }
+
+        snowballService.spend(
+                m,
+                DOWNGRADE_PROTECT_COST,
+                SnowballService.REASON_IGLOO_DOWN_PROTECT
+        );
+
+        m.resetFreezeFailCount();
+
+        return buildStatus(m);
     }
+
 
     /**
      * 하락 확정: 실패 누적 임계 도달 상태에서 별도 호출됨
@@ -121,6 +135,11 @@ public class IglooService {
 
         Member m = memberRepository.findById(member.getId()).orElseThrow();
 
+        // 임계 도달 여부 체크(임계 도달 안된 상태에서 호출되면 예외)
+        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
+            throw new IglooException(IglooErrorCode.NOT_REACHED_THRESHOLD);
+        }
+
         // 이미 레벨 1인 경우 예외처리
         if (m.getIglooLevel() <= 1) {
             throw new IglooException(IglooErrorCode.IGLOO_LEVEL_MIN);
@@ -129,12 +148,7 @@ public class IglooService {
         m.downIglooLevel();
         m.resetFreezeFailCount();
 
-        return new IglooResponseDto.Status(
-                m.getIglooLevel(),
-                snowballService.getBalance(m),
-                requiredForNext(m.getIglooLevel()),
-                m.getFreezeFailCount()
-        );
+        return buildStatus(m);
     }
 
     private int upgradeCost(int nextLevel) {
@@ -147,4 +161,14 @@ public class IglooService {
         int next = currentLevel + 1;
         return upgradeCost(next);
     }
+
+    private IglooResponseDto.Status buildStatus(Member m) {
+        return new IglooResponseDto.Status(
+                m.getIglooLevel(),
+                snowballService.getBalance(m),
+                requiredForNext(m.getIglooLevel()),
+                m.getFreezeFailCount()
+        );
+    }
+
 }
