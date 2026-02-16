@@ -22,8 +22,11 @@ public enum MemberErrorCode implements BaseErrorCode {
 
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_1",
-            "회원을 찾을 수 없습니다.")
-    ;
+            "회원을 찾을 수 없습니다."),
+
+    MEMBER_PHONE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,
+            "MEMBER400_3",
+            "등록된 전화번호가 이미 존재합니다."),;
 
     private final HttpStatus status;
     private final String code;

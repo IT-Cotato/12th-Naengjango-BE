@@ -1,6 +1,8 @@
 package com.itcotato.naengjango.domain.member.controller;
 
 import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
+import com.itcotato.naengjango.domain.member.dto.SmsRequestDTO;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
 import com.itcotato.naengjango.domain.member.exception.code.MemberSuccessCode;
 import com.itcotato.naengjango.domain.member.service.MemberService;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "사용자 회원가입", description = "사용자 회원가입 관련 API")
@@ -101,5 +104,31 @@ public class MemberController {
         memberService.signupSocial(request);
 
         return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_SIGNUP_SUCCESS, "소셜 회원가입이 완료되었습니다.");
+    }
+
+
+    @Operation(
+            summary = "전화번호 저장 API (OAuth2 사용자용)",
+            description = """
+                이미 로그인된 소셜 사용자가 전화번호를 저장하는 API입니다.
+                - JWT 인증 필요
+                - SMS 인증이 완료된 번호만 저장 가능
+                """
+    )
+    @PatchMapping("/me/phone")
+    public ApiResponse<String> updatePhoneNumber(
+            @AuthenticationPrincipal Member member,
+            @RequestBody SmsRequestDTO.SmsVerifyDTO request
+    ) {
+        memberService.updatePhoneNumber(
+                member,
+                request.getPhoneNumber(),
+                request.getVerifyCode()
+        );
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_UPDATE_SUCCESS,
+                "전화번호가 저장되었습니다."
+        );
     }
 }
