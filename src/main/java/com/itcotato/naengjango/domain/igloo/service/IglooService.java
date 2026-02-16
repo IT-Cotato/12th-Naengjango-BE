@@ -86,6 +86,15 @@ public class IglooService {
             return new IglooResponseDto.FailCheckResult(false, false, m.getIglooLevel());
         }
 
+        // 1레벨이면 실패 누적 x
+        if (m.getIglooLevel() <= 1) {
+            return new IglooResponseDto.FailCheckResult(
+                    false,
+                    false,
+                    m.getIglooLevel()
+            );
+        }
+
         int balance = snowballService.getBalance(m);
         boolean canProtect = balance >= DOWNGRADE_PROTECT_COST;
 
