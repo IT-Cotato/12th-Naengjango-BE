@@ -109,7 +109,10 @@ public class SecurityConfig {
                 "https://*.nip.io",
                 "http://*.nip.io",
                 "https://15.134.213.116.nip.io",
-                "https://*.vercel.app" // 프론트 배포 주소
+                "https://*.vercel.app", // 프론트 배포 주소
+                "https://naengjango.cloud",
+                "https://www.naengjango.cloud"
+
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
