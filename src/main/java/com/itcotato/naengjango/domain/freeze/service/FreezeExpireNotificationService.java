@@ -42,7 +42,7 @@ public class FreezeExpireNotificationService {
 
     private String buildMessage(FreezeItem item) {
         return String.format(
-                "[냉잔고] 냉동 시간이 끝났어요!\n[%s] %s (%d원)",
+                "[품목] 냉동이 종료되었습니다. 냉동을 녹여보세요!",
                 item.getAppName(),
                 item.getItemName(),
                 item.getPrice()
