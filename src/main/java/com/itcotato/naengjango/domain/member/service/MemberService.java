@@ -413,26 +413,25 @@ public class MemberService {
      * 3) 업데이트
      */
     @Transactional
-    public void updatePhoneNumber(Member member, String phoneNumber, String verifyCode) {
+    public void updatePhoneNumber(Member loginMember, String phoneNumber) {
 
-        // 1. SMS 인증 검증
-        String result = smsService.verifyCode(phoneNumber, verifyCode);
-
-        if (!"SUCCESS".equals(result)) {
-            throw new MemberException(SmsErrorCode.SMS_BAD_REQUEST);
-        }
+        // 1. Redis 인증 완료 상태 확인 (verifyCode 호출 X)
+        validateSmsVerification(phoneNumber);
 
         // 2. 영속 상태로 다시 조회
-        Member m = memberRepository.findById(member.getId())
+        Member member = memberRepository.findById(loginMember.getId())
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 3. 전화번호 중복 체크
-        if (memberRepository.existsByPhoneNumber(phoneNumber)) {
+        // 3. 전화번호 중복 체크 (본인 제외)
+        if (memberRepository.existsByPhoneNumberAndIdNot(phoneNumber, member.getId())) {
             throw new MemberException(MemberErrorCode.MEMBER_PHONE_ALREADY_EXISTS);
         }
 
         // 4. 업데이트
         member.updatePhoneNumber(phoneNumber);
+
+        // 5. Redis 인증 상태 제거 (회원가입과 동일 패턴)
+        redisTemplate.delete(VERIFIED_PREFIX + phoneNumber);
     }
 
     @Transactional
