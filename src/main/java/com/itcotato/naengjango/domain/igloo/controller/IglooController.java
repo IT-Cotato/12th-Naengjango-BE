@@ -70,4 +70,24 @@ public class IglooController {
                 iglooService.downgrade(member)
         );
     }
+
+    /**
+     * 이글루 하락 방어 (프론트 confirm 이후 호출)
+     */
+    @Operation(
+            summary = "이글루 하락 방어 by 임준서 (개발 완료)",
+            description = """
+                    이글루 하락 방어 API 입니다.
+                    - 이글루 단계 하락 방어에 필요한 눈덩이를 소비하고,, 이글루 단계를 유지시킵니다.
+                    - 방어 성공 시 이글루 단계와 남은 눈덩이 개수를 반환합니다.
+                    """)
+    @PostMapping("/protect")
+    public ApiResponse<IglooResponseDto.Status> protect(
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.onSuccess(
+                IglooSuccessCode.IGLOO_PROTECT_SUCCESS,
+                iglooService.protect(member)
+        );
+    }
 }
