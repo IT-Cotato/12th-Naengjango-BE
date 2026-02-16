@@ -80,12 +80,6 @@ public class IglooService {
 
         Member m = memberRepository.findById(member.getId()).orElseThrow();
 
-        m.addFreezeFailCount(failDelta);
-
-        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
-            return new IglooResponseDto.FailCheckResult(false, false, m.getIglooLevel());
-        }
-
         // 1레벨이면 실패 누적 x
         if (m.getIglooLevel() <= 1) {
             return new IglooResponseDto.FailCheckResult(
@@ -94,6 +88,13 @@ public class IglooService {
                     m.getIglooLevel()
             );
         }
+
+        m.addFreezeFailCount(failDelta);
+
+        if (!m.reachedFailThreshold(FAIL_THRESHOLD)) {
+            return new IglooResponseDto.FailCheckResult(false, false, m.getIglooLevel());
+        }
+
 
         int balance = snowballService.getBalance(m);
         boolean canProtect = balance >= DOWNGRADE_PROTECT_COST;
