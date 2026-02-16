@@ -61,3 +61,6 @@ coolsms:
 
 server:
   forward-headers-strategy: native
+
+app:
+  front-url: https://12th-naengjango-fe.vercel.app
