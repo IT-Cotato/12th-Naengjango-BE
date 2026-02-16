@@ -29,4 +29,9 @@ public class Agreement extends BaseEntity {
 
     @Column(nullable = false, length = 10)
     private String version; // 버전
+
+    // 동의 필수 여부를 반환하는 메서드
+    public boolean required() {
+        return Boolean.TRUE.equals(isRequired);
+    }
 }

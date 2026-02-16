@@ -17,6 +17,7 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     // 회원정보 저장 관련 성공 코드
     MEMBER_SIGNUP_SUCCESS(HttpStatus.OK, "MEMBER200_2", "회원가입이 성공적으로 완료되었습니다."),
 
+    // 회원정보 업데이트 관련 성공 코드
     MEMBER_UPDATE_SUCCESS(HttpStatus.OK, "MEMBER200_3", "회원정보가 성공적으로 업데이트되었습니다."),;
 
     private final HttpStatus status;

@@ -1,5 +1,7 @@
 package com.itcotato.naengjango.domain.member.controller;
 
+import com.itcotato.naengjango.domain.member.dto.AgreementRequestDto;
+import com.itcotato.naengjango.domain.member.dto.AgreementResponseDto;
 import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
 import com.itcotato.naengjango.domain.member.dto.SmsRequestDTO;
 import com.itcotato.naengjango.domain.member.entity.Member;
@@ -130,5 +132,29 @@ public class MemberController {
                 MemberSuccessCode.MEMBER_UPDATE_SUCCESS,
                 "전화번호가 저장되었습니다."
         );
+    }
+
+
+    /**
+     * 약관 동의 API
+     */
+    @Operation(
+            summary = "약관 동의 API",
+            description = """
+                사용자가 약관에 동의하는 API입니다.
+                - JWT 인증 필요
+                - 요청 바디에 동의할 약관 ID 리스트를 포함하여 전송합니다.
+                - 성공 시 동의한 약관 리스트를 반환합니다.
+                """
+    )
+    @PostMapping("/agreements")
+    public ApiResponse<Void> agreeAgreements(
+            @AuthenticationPrincipal Member member,
+            @RequestBody AgreementRequestDto.AgreeRequest request
+    ) {
+
+        memberService.agreeAgreements(member, request);
+
+        return ApiResponse.onSuccess(MemberSuccessCode.MEMBER_UPDATE_SUCCESS, null);
     }
 }

@@ -1,5 +1,7 @@
 package com.itcotato.naengjango.domain.member.service;
 
+import com.itcotato.naengjango.domain.member.dto.AgreementRequestDto;
+import com.itcotato.naengjango.domain.member.dto.AgreementResponseDto;
 import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
 import com.itcotato.naengjango.domain.member.dto.MyPageDto;
 import com.itcotato.naengjango.domain.member.entity.Agreement;
@@ -22,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -425,5 +429,49 @@ public class MemberService {
 
         // 3. 업데이트
         member.updatePhoneNumber(phoneNumber);
+    }
+
+    @Transactional
+    public void agreeAgreements(
+            Member member,
+            AgreementRequestDto.AgreeRequest request
+    ) {
+
+        Map<Long, Boolean> requestMap = request.agreements()
+                .stream()
+                .collect(Collectors.toMap(
+                        AgreementRequestDto.AgreementItem::agreementId,
+                        AgreementRequestDto.AgreementItem::agreed
+                ));
+
+        List<Agreement> agreements = agreementRepository.findAll();
+
+        for (Agreement agreement : agreements) {
+
+            boolean agreed = requestMap.getOrDefault(
+                    agreement.getAgreementId(),
+                    false
+            );
+
+            // 필수 약관 체크
+            if (agreement.required() && !agreed) {
+                throw new IllegalArgumentException("필수 약관 미동의");
+            }
+
+            MemberAgreement memberAgreement =
+                    memberAgreementRepository
+                            .findByMemberAndAgreement(member, agreement)
+                            .orElseGet(() ->
+                                    MemberAgreement.create(member, agreement)
+                            );
+
+            if (agreed) {
+                memberAgreement.agree();
+            } else {
+                memberAgreement.withdraw();
+            }
+
+            memberAgreementRepository.save(memberAgreement);
+        }
     }
 }
