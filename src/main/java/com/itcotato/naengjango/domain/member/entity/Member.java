@@ -44,7 +44,7 @@ public class Member extends BaseEntity {
     private String password;
 
     /** 회원 전화번호 */
-    @Column(name = "phone_number", nullable = false, length = 255)
+    @Column(name = "phone_number", length = 255)
     private String phoneNumber;
 
     /** 소셜 로그인 타입 */
