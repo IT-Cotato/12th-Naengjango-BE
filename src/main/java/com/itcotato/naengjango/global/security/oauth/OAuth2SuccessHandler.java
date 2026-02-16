@@ -9,6 +9,7 @@ import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -23,6 +24,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final MemberRepository memberRepository;
     private final AuthService authService;
+
+    @Value("${app.front-url}")
+    private String frontUrl;
+
 
     @Override
     public void onAuthenticationSuccess(
@@ -57,26 +62,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         AuthResponseDto.TokenResponse tokenResponse =
                 authService.issueToken(member);
 
-        String accessToken = tokenResponse.accessToken();
-        String refreshToken = tokenResponse.refreshToken();
-
-        // 4. redirect_uri 확인
-        String redirectUri = request.getParameter("redirect_uri");
-
-        if (redirectUri == null ||
-                (!redirectUri.equals("http://localhost:5173") &&
-                        !redirectUri.equals("https://12th-naengjango-fe.vercel.app"))) {
-
-            throw new IllegalArgumentException("Invalid redirect_uri");
-        }
-
-        // 5. phoneNumber 기준으로 판단
         boolean signupCompleted = member.getPhoneNumber() != null;
 
+        // 4. 프론트로 redirect
         String targetUrl = UriComponentsBuilder
-                .fromUriString(redirectUri + "/login")
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
+                .fromUriString(frontUrl + "/login")
+                .queryParam("accessToken", tokenResponse.accessToken())
+                .queryParam("refreshToken", tokenResponse.refreshToken())
                 .queryParam("signupCompleted", signupCompleted)
                 .build()
                 .toUriString();
