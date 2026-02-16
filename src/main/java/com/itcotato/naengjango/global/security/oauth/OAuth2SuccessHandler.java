@@ -25,7 +25,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final MemberRepository memberRepository;
     private final AuthService authService;
 
-    @Value("${app.front-url}")
+    @Value("${app.front-url:https://12th-naengjango-fe.vercel.app}")
     private String frontUrl;
 
 
