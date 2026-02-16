@@ -6,5 +6,6 @@ public record NotificationEvent(
         Long receiverId,
         NotificationType type,
         String message,
-        String link
+        String link,
+        String appIconKey
 ) {}

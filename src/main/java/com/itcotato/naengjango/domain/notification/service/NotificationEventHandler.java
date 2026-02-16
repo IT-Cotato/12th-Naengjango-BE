@@ -27,6 +27,7 @@ public class NotificationEventHandler {
                 .type(event.type())
                 .message(event.message())
                 .link(event.link())
+                .appIconKey(event.appIconKey())
                 .build()
         );
     }
