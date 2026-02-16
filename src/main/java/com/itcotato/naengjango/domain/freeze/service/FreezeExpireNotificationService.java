@@ -1,5 +1,6 @@
 package com.itcotato.naengjango.domain.freeze.service;
 
+import com.itcotato.naengjango.domain.favoriteapp.enums.SupportedApp;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.member.service.SmsService;
 import com.itcotato.naengjango.domain.notification.entity.NotificationType;
@@ -21,13 +22,18 @@ public class FreezeExpireNotificationService {
         String message = buildMessage(item);
         String link = "/freezes"; // 프론트 이동 경로
 
+        String appIconKey = SupportedApp.from(item.getAppName()) // 앱 아이콘
+                .map(SupportedApp::getIconKey)
+                .orElse("defaultImg");
+
         /* 앱 내 알림 (DB 저장) */
         eventPublisher.publishEvent(
                 new NotificationEvent(
                         member.getId(),
                         NotificationType.FREEZE_EXPIRED,
                         message,
-                        link
+                        link,
+                        appIconKey
                 )
         );
 
@@ -42,10 +48,8 @@ public class FreezeExpireNotificationService {
 
     private String buildMessage(FreezeItem item) {
         return String.format(
-                "[품목] 냉동이 종료되었습니다. 냉동을 녹여보세요!",
-                item.getAppName(),
-                item.getItemName(),
-                item.getPrice()
+                "[%s] 냉동이 종료되었습니다. 냉동을 녹여보세요!",
+                item.getItemName()
         );
     }
 }

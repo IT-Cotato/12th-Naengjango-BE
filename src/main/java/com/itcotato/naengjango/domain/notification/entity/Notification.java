@@ -35,12 +35,17 @@ public class Notification {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "app_icon_key", length = 50)
+    private String appIconKey;
+
+
     @Builder
-    private Notification(Member receiver, NotificationType type, String message, String link) {
+    private Notification(Member receiver, NotificationType type, String message, String link, String appIconKey) {
         this.receiver = receiver;
         this.type = type;
         this.message = message;
         this.link = link;
+        this.appIconKey = appIconKey;
     }
 
     public void markRead() {
