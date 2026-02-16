@@ -35,15 +35,14 @@ public class FreezeExpireScheduler {
 
         for (FreezeItem item : targets) {
             try {
+                int claimed = freezeItemRepository.claimNotified(item.getId(), FreezeStatus.FROZEN);
+                if (claimed == 0) continue; // 이미 누가 처리했음(중복 방지)
+
                 notificationService.notifyExpire(item);
-                item.markNotified();
             } catch (Exception e) {
-                log.error(
-                        "Freeze expire notification failed. freezeId={}",
-                        item.getId(),
-                        e
-                );
+                log.error("Freeze expire notification failed. freezeId={}", item.getId(), e);
             }
         }
+
     }
 }

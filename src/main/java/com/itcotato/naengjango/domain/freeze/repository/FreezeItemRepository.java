@@ -3,9 +3,10 @@ package com.itcotato.naengjango.domain.freeze.repository;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
@@ -59,4 +60,16 @@ public interface FreezeItemRepository extends JpaRepository<FreezeItem, Long> {
             @Param("member") Member member,
             Pageable pageable
     );
+
+    // 알림 선점용 update
+    @Modifying
+    @Query("""
+	update FreezeItem f
+	set f.notified = true
+	where f.id = :id
+	  and f.notified = false
+	  and f.status = :status
+""")
+    int claimNotified(@Param("id") Long id, @Param("status") FreezeStatus status);
+
 }
