@@ -422,20 +422,28 @@ public class MemberService {
             throw new MemberException(SmsErrorCode.SMS_BAD_REQUEST);
         }
 
-        // 2. 전화번호 중복 체크 (본인 제외)
+        // 2. 영속 상태로 다시 조회
+        Member m = memberRepository.findById(member.getId())
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        // 3. 전화번호 중복 체크
         if (memberRepository.existsByPhoneNumber(phoneNumber)) {
             throw new MemberException(MemberErrorCode.MEMBER_PHONE_ALREADY_EXISTS);
         }
 
-        // 3. 업데이트
+        // 4. 업데이트
         member.updatePhoneNumber(phoneNumber);
     }
 
     @Transactional
     public void agreeAgreements(
-            Member member,
+            Member loginMember,
             AgreementRequestDto.AgreeRequest request
     ) {
+
+        // 영속 상태로 다시 조회
+        Member member = memberRepository.findById(loginMember.getId())
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Map<Long, Boolean> requestMap = request.agreements()
                 .stream()
@@ -453,7 +461,6 @@ public class MemberService {
                     false
             );
 
-            // 필수 약관 체크
             if (agreement.required() && !agreed) {
                 throw new IllegalArgumentException("필수 약관 미동의");
             }
