@@ -1,5 +1,7 @@
 package com.itcotato.naengjango.domain.member.service;
 
+import com.itcotato.naengjango.domain.member.dto.AgreementRequestDto;
+import com.itcotato.naengjango.domain.member.dto.AgreementResponseDto;
 import com.itcotato.naengjango.domain.member.dto.MemberRequestDTO;
 import com.itcotato.naengjango.domain.member.dto.MyPageDto;
 import com.itcotato.naengjango.domain.member.entity.Agreement;
@@ -7,6 +9,7 @@ import com.itcotato.naengjango.domain.member.entity.FixedExpenditure;
 import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.domain.member.entity.MemberAgreement;
 import com.itcotato.naengjango.domain.member.enums.SocialType;
+import com.itcotato.naengjango.domain.member.exception.MemberException;
 import com.itcotato.naengjango.domain.member.exception.code.MemberErrorCode;
 import com.itcotato.naengjango.domain.member.exception.code.SmsErrorCode;
 import com.itcotato.naengjango.domain.member.repository.AgreementRepository;
@@ -21,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +40,7 @@ public class MemberService {
     private final StringRedisTemplate redisTemplate;
     private final PasswordEncoder passwordEncoder;
     private final String VERIFIED_PREFIX = "sms:verified:";
+    private final SmsService smsService;
 
     /**
      * 사용자 회원가입 관련 로직을 처리하는 서비스
@@ -400,4 +406,72 @@ public class MemberService {
         }
     }
 
+    /**
+     * 전화번호 변경 로직
+     * 1) SMS 인증 검증 (인증번호 일치 + 만료 여부)
+     * 2) 전화번호 중복 체크 (본인 제외)
+     * 3) 업데이트
+     */
+    @Transactional
+    public void updatePhoneNumber(Member member, String phoneNumber, String verifyCode) {
+
+        // 1. SMS 인증 검증
+        String result = smsService.verifyCode(phoneNumber, verifyCode);
+
+        if (!"SUCCESS".equals(result)) {
+            throw new MemberException(SmsErrorCode.SMS_BAD_REQUEST);
+        }
+
+        // 2. 전화번호 중복 체크 (본인 제외)
+        if (memberRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new MemberException(MemberErrorCode.MEMBER_PHONE_ALREADY_EXISTS);
+        }
+
+        // 3. 업데이트
+        member.updatePhoneNumber(phoneNumber);
+    }
+
+    @Transactional
+    public void agreeAgreements(
+            Member member,
+            AgreementRequestDto.AgreeRequest request
+    ) {
+
+        Map<Long, Boolean> requestMap = request.agreements()
+                .stream()
+                .collect(Collectors.toMap(
+                        AgreementRequestDto.AgreementItem::agreementId,
+                        AgreementRequestDto.AgreementItem::agreed
+                ));
+
+        List<Agreement> agreements = agreementRepository.findAll();
+
+        for (Agreement agreement : agreements) {
+
+            boolean agreed = requestMap.getOrDefault(
+                    agreement.getAgreementId(),
+                    false
+            );
+
+            // 필수 약관 체크
+            if (agreement.required() && !agreed) {
+                throw new IllegalArgumentException("필수 약관 미동의");
+            }
+
+            MemberAgreement memberAgreement =
+                    memberAgreementRepository
+                            .findByMemberAndAgreement(member, agreement)
+                            .orElseGet(() ->
+                                    MemberAgreement.create(member, agreement)
+                            );
+
+            if (agreed) {
+                memberAgreement.agree();
+            } else {
+                memberAgreement.withdraw();
+            }
+
+            memberAgreementRepository.save(memberAgreement);
+        }
+    }
 }
