@@ -33,11 +33,6 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(info)
-                .addSecurityItem(securityRequirement)
-                .servers(List.of(
-                        new Server()
-                                .url("https://15.134.213.116.nip.io")
-                                .description("Production server")
-                ));
+                .addSecurityItem(securityRequirement);
     }
 }
