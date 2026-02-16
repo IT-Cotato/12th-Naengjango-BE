@@ -124,8 +124,7 @@ public class MemberController {
     ) {
         memberService.updatePhoneNumber(
                 member,
-                request.getPhoneNumber(),
-                request.getVerifyCode()
+                request.getPhoneNumber()
         );
 
         return ApiResponse.onSuccess(
