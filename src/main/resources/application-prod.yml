@@ -63,4 +63,4 @@ server:
   forward-headers-strategy: native
 
 app:
-  front-url: http://localhost:5173 # 임시로 프론트 로컬 주소로 돌림. 프론트 머지 이후 배포 주소로 변경 필요
+  front-url: https://12th-naengjango-fe.vercel.app/login # 임시로 프론트 로컬 주소로 돌림. 프론트 머지 이후 배포 주소로 변경 필요
