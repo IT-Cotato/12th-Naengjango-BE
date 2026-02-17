@@ -293,12 +293,12 @@ public class FreezeService {
     private void validateCreate(FreezeRequestDto.Create request) {
         if (request.appName() == null || request.appName().isBlank())
             throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_APPNAME);
-        if (request.appName().length() > 30)
+        if (request.appName().length() > 64)
             throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_APPNAME);
 
         if (request.itemName() == null || request.itemName().isBlank())
             throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_ITEM);
-        if (request.itemName().length() > 10)
+        if (request.itemName().length() > 64)
             throw new FreezeException(FreezeErrorCode.FREEZE_INVALID_ITEM);
 
         if (request.price() <= 0 || request.price() > 9_999_999)
