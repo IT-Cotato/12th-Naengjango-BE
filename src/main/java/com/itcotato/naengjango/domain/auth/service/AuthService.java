@@ -33,12 +33,12 @@ public class AuthService {
 
 
     /** 토큰 발급 공통 메서드 */
+    @Transactional(readOnly = true)
     public AuthResponseDto.TokenResponse issueToken(Member member) {
 
         // 1. 가입 완료 여부 판단
         boolean signupCompleted =
-                member.getPhoneNumber() != null
-                        && !member.getMemberAgreements().isEmpty();
+                member.getPhoneNumber() != null;
 
         // 2. Claims 생성
         JwtClaims claims = new JwtClaims(
