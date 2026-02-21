@@ -1,7 +1,7 @@
 <h1 align="center">❄️ Naengjango Backend</h1>
 <p align="center">
-Gamified Anti-Impulse Spending Service <br/>
-소비를 24시간 얼리고, 실패하면 패널티를 받는 절약 관리 서비스
+충동구매를 줄이기 위해 소비를 24시간 “냉동”하는 서비스 <br/>
+지연·실패·보상 구조를 게임화하여 절약 습관을 유도합니다.
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@ Gamified Anti-Impulse Spending Service <br/>
 | Role         | Name | GitHub |
 |--------------|------|--------|
 | Backend Lead | 임준서  | [@junjunseo](https://github.com/junjunseo) |
-| Backend      | 이정환  | [@Miniberry](https://github.com/ljh8450) |
+| Backend      | 이정환  | [@ljh8450](https://github.com/ljh8450) |
 | Backend      | 주성아  | [@zoosungah](https://github.com/zoosungah) |
 
 
@@ -35,7 +35,6 @@ Gamified Anti-Impulse Spending Service <br/>
 <p align="center">
   <img src="docs/architecture.png" width="900" alt="Naengjango Architecture Diagram"/>
 </p>
----
 
 ## 🛠 Tech Stack
 
