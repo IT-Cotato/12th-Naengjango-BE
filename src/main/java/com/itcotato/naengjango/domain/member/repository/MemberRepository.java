@@ -33,4 +33,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByNameAndPhoneNumber(String name, String phoneNumber);
 
     Optional<Member> findByNameAndLoginIdAndPhoneNumber(String name, String username, String phoneNumber);
+
+    boolean existsByPhoneNumberAndIdNot(String phoneNumber, Long id);
 }

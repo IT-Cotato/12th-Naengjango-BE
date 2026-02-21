@@ -1,10 +1,12 @@
 package com.itcotato.naengjango.global.security.jwt;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,9 +23,11 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+
 
     /**
      * 요청 헤더에서 JWT 토큰을 추출하고 유효성을 검사하여
@@ -36,13 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
+        System.out.println("[JWT] " + request.getMethod() + " " + request.getRequestURI() + " auth=" + authHeader);
         // 토큰 없으면 그냥 통과 (인증 안 된 상태로 컨트롤러에서 막힘)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -56,15 +61,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             JwtClaims claims = jwtProvider.extractClaims(token);
 
             // 회원 가입 미완료 상태 제한
-            if (!claims.signupCompleted()
-                    && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//            if (!claims.signupCompleted()
+//                    && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//
+//                response.sendError(
+//                        HttpStatus.FORBIDDEN.value(),
+//                        "Signup is not completed"
+//                );
+//                return;
+//            }
 
-                response.sendError(
-                        HttpStatus.FORBIDDEN.value(),
-                        "Signup is not completed"
-                );
-                return;
-            }
+//            // 로컬에서는 가입 미완료 제한 해제 (테스트용)
+//            if (!"local".equals(System.getProperty("spring.profiles.active"))) {
+//                if (!claims.signupCompleted() && !isAllowedIncompleteSignup(request.getRequestURI())) {
+//                    response.sendError(HttpStatus.FORBIDDEN.value(), "Signup is not completed");
+//                    return;
+//                }
+//            }
+
+            Member member = jwtProvider.getMember(token);
 
             // 인증 객체 생성
             var authorities = List.of(
@@ -73,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             var authentication =
                     new UsernamePasswordAuthenticationToken(
-                            claims.memberId(),
+                            member,
                             null,
                             authorities
                     );
@@ -91,7 +106,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        log.debug("[JWT] request uri = {}", request.getRequestURI());
+        log.debug("[JWT] Authorization = {}", request.getHeader("Authorization"));
+
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * 인증 필터를 적용하지 않을 경로 설정
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+
+        return uri.startsWith("/auth");
     }
 
     /**

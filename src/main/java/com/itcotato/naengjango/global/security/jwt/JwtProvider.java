@@ -1,9 +1,12 @@
 package com.itcotato.naengjango.global.security.jwt;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
+import com.itcotato.naengjango.domain.member.repository.MemberRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -22,13 +25,17 @@ public class JwtProvider {
     private static final String CLAIM_SIGNUP_COMPLETED = "signupCompleted";
 
     private final JwtProperties properties;
+    private final MemberRepository memberRepository;
     private final SecretKey secretKey;
 
-    public JwtProvider(JwtProperties properties) {
+    public JwtProvider(
+            JwtProperties properties,
+            MemberRepository memberRepository) {
         this.properties = properties;
         this.secretKey = Keys.hmacShaKeyFor(
                 properties.secret().getBytes(StandardCharsets.UTF_8)
         );
+        this.memberRepository = memberRepository;
     }
 
     /* =========================
@@ -48,6 +55,7 @@ public class JwtProvider {
         Instant expiry = now.plusSeconds(expireSeconds);
 
         return Jwts.builder()
+                .setSubject(String.valueOf(claims.memberId()))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .claim(CLAIM_MEMBER_ID, claims.memberId())
@@ -104,5 +112,18 @@ public class JwtProvider {
                 claims.get("role", String.class),
                 claims.get("signupCompleted", Boolean.class)
         );
+    }
+
+    /**
+     * JWT → Member 조회
+     * - 인증 필터에서 사용
+     */
+    public Member getMember(String token) {
+        JwtClaims claims = extractClaims(token);
+
+        return memberRepository.findById(claims.memberId())
+                .orElseThrow(() ->
+                        new IllegalStateException("Member not found. memberId=" + claims.memberId())
+                );
     }
 }

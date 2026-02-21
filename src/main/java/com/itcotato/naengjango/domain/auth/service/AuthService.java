@@ -33,13 +33,12 @@ public class AuthService {
 
 
     /** 토큰 발급 공통 메서드 */
-    @Transactional
+    @Transactional(readOnly = true)
     public AuthResponseDto.TokenResponse issueToken(Member member) {
 
         // 1. 가입 완료 여부 판단
         boolean signupCompleted =
-                member.getPhoneNumber() != null
-                        && !member.getMemberAgreements().isEmpty();
+                member.getPhoneNumber() != null;
 
         // 2. Claims 생성
         JwtClaims claims = new JwtClaims(
@@ -53,12 +52,14 @@ public class AuthService {
         String refreshToken = jwtProvider.createRefreshToken(claims);
 
         // 4. RefreshToken Redis 저장
-        refreshTokenRedisRepository.save(
-                member.getId(),
-                refreshToken,
-                Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
-        );
-
+        try {
+            refreshTokenRedisRepository.save(
+                    member.getId(),
+                    refreshToken,
+                    Duration.ofSeconds(jwtProvider.getRefreshTokenExpireSeconds())
+            );} catch (Exception e) {
+            throw e;
+        }
         // 5. 공통 응답 DTO
         return new AuthResponseDto.TokenResponse(
                 accessToken,
@@ -68,7 +69,7 @@ public class AuthService {
     }
 
     /** 기본 로그인 (아이디 + 비밀번호) */
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponseDto.TokenResponse localLogin(
             AuthRequestDto.LoginRequest request
     ) {
@@ -87,6 +88,7 @@ public class AuthService {
     }
 
     /** 토큰 재발급 (Access Token 재발급) */
+    @Transactional
     public AuthResponseDto.TokenResponse refresh(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new AuthException(MemberErrorCode.MEMBER_NOT_FOUND));

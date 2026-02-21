@@ -5,6 +5,7 @@ import com.itcotato.naengjango.domain.account.dto.TransactionResponseDTO;
 import com.itcotato.naengjango.domain.account.exception.code.AccountSuccessCode;
 import com.itcotato.naengjango.domain.account.service.TransactionParser;
 import com.itcotato.naengjango.domain.account.service.TransactionService;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 //import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -104,12 +105,12 @@ public class TransactionController {
                     description = "존재하지 않는 회원"),
     })
     @PostMapping("/transactions")
-    public ApiResponse<Boolean> createTransaction(
-            @AuthenticationPrincipal Long memberId,
+    public ApiResponse<TransactionResponseDTO.CreateResultDTO> createTransaction(
+            @AuthenticationPrincipal Member member,
             @RequestBody TransactionRequestDTO.CreateDTO request) {
 
-        transactionService.saveTransaction(memberId, request);
-        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, true);
+        TransactionResponseDTO.CreateResultDTO result = transactionService.saveTransaction(member, request);
+        return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_SAVE_SUCCESS, result);
     }
 
     /**
@@ -152,10 +153,10 @@ public class TransactionController {
 
     @GetMapping("/transactions")
     public ApiResponse<List<TransactionResponseDTO.TransactionListDTO>> getTransactions(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal Member member,
             @RequestParam(name = "date") String date) {
 
-        List<TransactionResponseDTO.TransactionListDTO> result = transactionService.getTransactionsByDate(memberId, date);
+        List<TransactionResponseDTO.TransactionListDTO> result = transactionService.getTransactionsByDate(member, date);
 
         return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_STATUS_SUCCESS, result);
     }
@@ -186,11 +187,11 @@ public class TransactionController {
     })
     @PatchMapping("/transactions/{transaction_id}")
     public ApiResponse<Boolean> updateTransaction(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal Member member,
             @PathVariable(name = "transaction_id") Long transactionId,
             @RequestBody TransactionRequestDTO.UpdateDTO request) {
 
-        transactionService.updateTransaction(memberId, transactionId, request);
+        transactionService.updateTransaction(member, transactionId, request);
         return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_UPDATE_SUCCESS, true);
     }
 
@@ -225,10 +226,10 @@ public class TransactionController {
     })
     @DeleteMapping("/transactions/{transaction_id}")
     public ApiResponse<Boolean> deleteTransaction(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal Member member,
             @PathVariable(name = "transaction_id") Long transactionId) {
 
-        transactionService.deleteTransaction(memberId, transactionId);
+        transactionService.deleteTransaction(member, transactionId);
         return ApiResponse.onSuccess(AccountSuccessCode.TRANSACTION_DELETE_SUCCESS, true);
     }
 }

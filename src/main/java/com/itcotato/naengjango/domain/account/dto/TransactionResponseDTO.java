@@ -44,6 +44,9 @@ public class TransactionResponseDTO {
     @AllArgsConstructor
     @Schema(description = "날짜별 가계부 내역 조회 응답 정보")
     public static class TransactionListDTO {
+        @Schema(description = "내역ID", example = "5")
+        private Long transactionId;
+
         @Schema(description = "분류 (수입/지출)", example = "지출")
         private String type;        // 분류(수입/지출)
 
@@ -61,5 +64,17 @@ public class TransactionResponseDTO {
 
         @Schema(description = "카테고리", example = "식비")
         private String category;    // 카테고리
+    }
+
+    /**
+     * 가계부 내역 저장 관련 DTO
+     */
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "가계부 내역 저장 응답 정보")
+    public static class CreateResultDTO {
+        private Long transactionId;     // transaction_id 반환
     }
 }

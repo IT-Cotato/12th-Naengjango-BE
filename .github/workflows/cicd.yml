@@ -12,7 +12,8 @@ jobs:
 #        working-directory: 12th-Naengjango-BE
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -58,7 +59,7 @@ jobs:
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/naengjango-app:latest
             
             # 3. 기존 컨테이너 중지
-            sudo docker-compose down || true
+            # sudo docker-compose down || true
             
             # 4. 새 컨테이너 실행 (.env 파일을 자동으로 읽음)
             sudo docker-compose up -d

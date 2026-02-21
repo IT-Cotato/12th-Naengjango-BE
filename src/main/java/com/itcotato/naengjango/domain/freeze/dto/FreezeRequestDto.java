@@ -15,7 +15,7 @@ public class FreezeRequestDto {
     public record Create(
             String appName,
             String itemName,
-            int price
+            Long price
     ) {}
 
     /**
@@ -24,7 +24,7 @@ public class FreezeRequestDto {
     public record Update(
             String appName,
             String itemName,
-            int price
+            Long price
     ) {}
 
     /**

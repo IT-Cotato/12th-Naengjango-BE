@@ -5,19 +5,19 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-#  h2:
-#    console:
-#      enabled: true
-#      path: /h2-console
+  #  h2:
+  #    console:
+  #      enabled: true
+  #      path: /h2-console
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: none # 배포 환경에서는 none
     show-sql: false
     properties:
       hibernate:
         format_sql: false
-        
+
   security:
     oauth2:
       client:
@@ -33,6 +33,9 @@ spring:
     redis:
       host: redis
       port: 6379
+      timeout: 2s
+      lettuce:
+        shutdown-timeout: 0
 
 management:
   endpoints:
@@ -42,8 +45,8 @@ management:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiration-ms: 1800000
-  refresh-token-expiration-ms: 1209600000
+  access-exp-seconds: 1800      # 30분
+  refresh-exp-seconds: 1209600  # 14일
 
 logging:
   level:
@@ -55,3 +58,9 @@ coolsms:
     key: ${COOL_SMS_API_KEY}
     secret: ${COOL_SMS_API_SECRET}
   from: ${COOL_SMS_FROM_PHONE_NUMBER}
+
+server:
+  forward-headers-strategy: native
+
+app:
+  front-url: https://12th-naengjango-fe.vercel.app

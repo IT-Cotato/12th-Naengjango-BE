@@ -3,6 +3,7 @@ package com.itcotato.naengjango.domain.account.controller;
 import com.itcotato.naengjango.domain.account.dto.BudgetResponseDTO;
 import com.itcotato.naengjango.domain.account.exception.code.AccountSuccessCode;
 import com.itcotato.naengjango.domain.account.service.BudgetService;
+import com.itcotato.naengjango.domain.member.entity.Member;
 import com.itcotato.naengjango.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -64,12 +65,12 @@ public class BudgetController {
 
     @GetMapping("/status")
     public ApiResponse<BudgetResponseDTO.BudgetStatusDTO> getBudgetStatus(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal Member member,
             @RequestParam int year,
             @RequestParam int month,
             @RequestParam int day) {
 
-        BudgetResponseDTO.BudgetStatusDTO result = budgetService.getBudgetStatus(memberId, year, month, day);
+        BudgetResponseDTO.BudgetStatusDTO result = budgetService.getBudgetStatus(member, year, month, day);
         return ApiResponse.onSuccess(AccountSuccessCode.ACCOUNT_STATUS_SUCCESS, result);
     }
 }

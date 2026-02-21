@@ -1,5 +1,6 @@
-package com.itcotato.naengjango.domain.member.entity;
+package com.itcotato.naengjango.domain.snowball.entity;
 
+import com.itcotato.naengjango.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,6 +37,15 @@ public class SnowballLedger {
         SnowballLedger l = new SnowballLedger();
         l.member = member;
         l.amount = amount;
+        l.reason = reason;
+        l.createdAt = LocalDateTime.now();
+        return l;
+    }
+
+    public static SnowballLedger spend(Member member, int amount, String reason) {
+        SnowballLedger l = new SnowballLedger();
+        l.member = member;
+        l.amount = -amount;
         l.reason = reason;
         l.createdAt = LocalDateTime.now();
         return l;

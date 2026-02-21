@@ -3,10 +3,13 @@ package com.itcotato.naengjango.domain.freeze.repository;
 import com.itcotato.naengjango.domain.freeze.entity.FreezeItem;
 import com.itcotato.naengjango.domain.freeze.enums.FreezeStatus;
 import com.itcotato.naengjango.domain.member.entity.Member;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -44,6 +47,29 @@ public interface FreezeItemRepository extends JpaRepository<FreezeItem, Long> {
     // 만료 알림 대상 조회
     List<FreezeItem> findByExpiresAtBeforeAndNotifiedFalseAndStatus(LocalDateTime now, FreezeStatus status);
 
-    // streak 체크용
-    List<FreezeItem> findTop3ByMemberAndStatusInOrderByDecidedAtDesc(Member member, List<FreezeStatus> statuses);
+    // 최근 성공 날짜 조회 (중복 제거)
+    @Query("""
+    select distinct f.decidedAt
+    from FreezeItem f
+    where f.member = :member
+      and f.status = 'SUCCESS'
+      and f.decidedAt is not null
+    order by f.decidedAt desc
+""")
+    List<LocalDateTime> findRecentSuccessDecidedAt(
+            @Param("member") Member member,
+            Pageable pageable
+    );
+
+    // 알림 선점용 update
+    @Modifying
+    @Query("""
+	update FreezeItem f
+	set f.notified = true
+	where f.id = :id
+	  and f.notified = false
+	  and f.status = :status
+""")
+    int claimNotified(@Param("id") Long id, @Param("status") FreezeStatus status);
+
 }

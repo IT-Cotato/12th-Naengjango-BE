@@ -23,7 +23,7 @@ public class FreezeResponseDto {
             Long id,
             String appName,
             String itemName,
-            int price,
+            Long price,
             LocalDateTime frozenAt,
             LocalDateTime expiresAt,
             long remainingSeconds
@@ -34,18 +34,36 @@ public class FreezeResponseDto {
      * - 성공 / 실패 / 연장
      */
     public record BulkAction(
+            ActionResult action,
+            StatusSnapshot status
+    ) {}
+
+    /**
+     * 상태 스냅샷 응답
+     */
+    public record ActionResult(
             int affectedCount,
-            int snowballsGranted,
-            boolean streakBonusTriggered
+            int snowballsGranted
+    ) {}
+
+    /**
+     * 요청 이후 "현재 사용자 상태"
+     */
+    public record StatusSnapshot(
+            int currentSnowballBalance,
+            boolean isStreak,
+            int streakDays,
+            boolean iglooThresholdReached,
+            boolean iglooCanProtect
     ) {}
 
     /**
      * 예산 미리보기 응답
      */
     public record BudgetPreview(
-            int selectedTotalPrice,
+            Long selectedTotalPrice,
             int remainingDaysInMonth,
-            int perDayBudget
+            Long perDayBudget
     ) {}
 
     /**
@@ -54,6 +72,25 @@ public class FreezeResponseDto {
     public record LinkParse(
             String appName,
             String itemName,
-            int price
+            Long price
+    ) {}
+
+    /**
+     * 특정 냉동 품목 상세 조회 응답
+     */
+    public record Detail(
+            Long id,
+            String appName,
+            String itemName,
+            Long price,
+            LocalDateTime frozenAt,
+            LocalDateTime expiresAt,
+            LocalDateTime updatedAt
+    ) {}
+
+    public record IglooFailInfo(
+            boolean thresholdReached,
+            boolean canProtect,
+            int currentLevel
     ) {}
 }
